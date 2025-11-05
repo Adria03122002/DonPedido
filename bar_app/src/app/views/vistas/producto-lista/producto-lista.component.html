@@ -1,0 +1,43 @@
+<div class="producto-lista-container">
+  <h2>
+    Lista de Productos
+    <div class="btn-contenedor-derecha">
+      <button class="btn-crear" [routerLink]="['/barra/productos/crear']">+ Añadir producto</button>
+    </div>
+  </h2>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Tipo</th>
+        <th>Disponible</th>
+        <th>Ingredientes</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let producto of productos">
+        <td>{{ producto.nombre }}</td>
+        <td>{{ producto.precio | currency:'EUR' }}</td>
+        <td>{{ producto.tipo }}</td>
+        <td>{{ producto.disponible ? 'Sí' : 'No' }}</td>
+        <td>
+          <ul>
+            <li *ngFor="let pi of producto.ingredientes">
+              {{ pi.ingrediente.nombre }} ({{ pi.cantidadNecesaria }})
+            </li>
+          </ul>
+        </td>
+        <td>
+          <button class="btn-accion editar" (click)="editarProducto(producto)">Editar</button>
+          <button class="btn-accion eliminar" (click)="eliminarProducto(producto.id)">Eliminar</button>
+        </td>
+
+      </tr>
+    </tbody>
+  </table>
+</div>

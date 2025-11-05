@@ -1,0 +1,61 @@
+<div class="stock-container">
+
+  <div class="producto-lista-container">
+    <h2>Lista de Productos</h2>
+    <div class="btn-contenedor-derecha">
+      <button class="btn-crear" [routerLink]="['/barra/stock/crear']">+ Añadir Ingrediente</button>
+    </div>
+
+    <table class="stock-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Stock</th>
+          <th>Unidad</th>
+          <th>Tipo</th>
+          <th>Disponible</th>
+        </tr>
+      </thead>
+        <tbody>
+          <tr *ngFor="let ingrediente of ingredientes">
+            <ng-container *ngIf="ingredienteEditando?.id === ingrediente.id; else vistaNormal">
+              <td><input [(ngModel)]="ingredienteEditando.nombre" /></td>
+              <td><input type="number" [(ngModel)]="ingredienteEditando.stock" /></td>
+              <td><input [(ngModel)]="ingredienteEditando.unidad" /></td>
+              <td>
+                <select [(ngModel)]="ingredienteEditando.tipo">
+                  <option *ngFor="let tipo of tiposIngrediente" [value]="tipo">{{ tipo }}</option>
+                </select>
+              </td>
+              <td>
+                <select [(ngModel)]="ingredienteEditando.disponible">
+                  <option [value]="true">Sí</option>
+                  <option [value]="false">No</option>
+                </select>
+              </td>
+              <td>
+                <button (click)="guardarCambios()">Guardar</button>
+                <button (click)="ingredienteEditando === null">Cancelar</button>
+              </td>
+            </ng-container>
+
+
+            <ng-template #vistaNormal>
+              <td>{{ ingrediente.nombre }}</td>
+              <td>{{ ingrediente.stock }}</td>
+              <td>{{ ingrediente.unidad }}</td>
+              <td>{{ ingrediente.tipo || '-' }}</td>
+              <td>
+                <span [class.disponible]="ingrediente.disponible" [class.no-disponible]="!ingrediente.disponible">
+                  {{ ingrediente.disponible ? 'Sí' : 'No' }}
+                </span>
+              </td>
+              <td>
+                <button (click)="editarIngrediente(ingrediente)">Editar</button>
+              </td>
+            </ng-template>
+          </tr>
+        </tbody>
+    </table>
+  </div>
+</div>

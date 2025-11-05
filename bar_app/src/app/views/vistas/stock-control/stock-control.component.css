@@ -1,0 +1,60 @@
+.stock-container {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  font-family: 'Segoe UI', sans-serif;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stock-container h2 {
+  margin-bottom: 1rem;
+}
+
+.btn-contenedor-derecha,
+.stock-container .btn-contenedor-derecha {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.btn-crear {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-crear:hover {
+  background-color: #27ae60;
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stock-table th,
+.stock-table td {
+  padding: 0.6rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.stock-table th {
+  background-color: #ecf0f1;
+  color: #2c3e50;
+}
+
+.disponible {
+  color: green;
+  font-weight: bold;
+}
+
+.no-disponible {
+  color: red;
+  font-weight: bold;
+}

@@ -1,0 +1,46 @@
+<h3>Pedidos del día</h3>
+<div
+  *ngFor="let pedido of pedidos"
+  class="pedido-card"
+  [ngClass]="{
+    'en-preparacion': pedido.estado === 'en preparación',
+    servido: pedido.estado === 'servido'
+  }"
+>
+  <div class="pedido-header">
+    <h3>Mesa {{ pedido.ubicacion?.numero || pedido.nombreCliente || pedido.ubicacion?.tipo }}</h3>
+    <div class="pedido-total">
+          Total: {{ calcularTotal(pedido) | currency:'EUR' }}
+    </div>
+  </div>
+
+  <div class="linea-producto" *ngFor="let linea of pedido.lineas">
+    
+      <ng-container *ngIf="linea.producto">
+          
+          <span>{{ linea.cantidad }}x {{ linea.producto.nombre }}</span> 
+          
+          <span *ngIf="linea.modificacion" class="linea-mod">({{ linea.modificacion }})</span>
+      
+      </ng-container>
+      <span *ngIf="!linea.producto">Error de datos (Producto no encontrado)</span>
+  </div>
+  
+  <div class="fecha-info">
+    Hace {{ pedido.fecha | tiempoTranscurrido }}
+  </div>
+
+  <div class="acciones-contenedor">
+    
+    <button 
+        class="btn-modificar" 
+        [routerLink]="['/camarero/mesa', pedido.ubicacion?.numero]" 
+    >
+      Ver / Modificar
+    </button>
+    
+    <button (click)="marcarPagado(pedido.id)" class="btn-pagar">
+      Marcar como pagado
+    </button>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="admin-container">
+  <div class="admin-header">
+    <h2>Panel de Administración</h2>
+    <div class="caja-superior">
+      <button class="boton-salir" (click)="salir()">Salir</button>
+    </div>
+    <div class="vista-buttons">
+      <a routerLink="/barra/pedidos" routerLinkActive="active">Pedidos</a>
+      <a routerLink="/barra/stock" routerLinkActive="active">Stock</a>
+      <a routerLink="/barra/crear" routerLinkActive="active">Crear Pedido</a>
+      <a routerLink="/barra/productos" routerLinkActive="active">Listar Productos</a>
+    </div>
+  </div>
+
+  <router-outlet></router-outlet>
+</div>

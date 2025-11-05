@@ -1,0 +1,16 @@
+  <form (ngSubmit)="anyadirIngrediente()">
+    <input type="text" placeholder="Nombre" [(ngModel)]="nuevoIngrediente.nombre" name="nombre" required />
+    <input type="number" placeholder="Stock" [(ngModel)]="nuevoIngrediente.stock" name="stock" required />
+    <input type="text" placeholder="Unidad" [(ngModel)]="nuevoIngrediente.unidad" name="unidad" required />
+
+    <select [(ngModel)]="nuevoIngrediente.tipo" name="tipo">
+      <option *ngFor="let tipo of tiposIngrediente" [value]="tipo">{{ tipo }}</option>
+    </select>
+
+    <label>
+      Disponible:
+      <input type="checkbox" [(ngModel)]="nuevoIngrediente.disponible" name="disponible" />
+    </label>
+    <button type="submit">Añadir</button>
+  </form>
+

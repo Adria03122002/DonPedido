@@ -1,0 +1,56 @@
+<div class="form-crear-producto">
+  <h2>Crear Producto</h2>
+
+  <form (ngSubmit)="crearProducto()">
+    <label>Nombre:</label>
+    <input type="text" [(ngModel)]="nuevoProducto.nombre" name="nombre" required />
+
+    <label>Tipo:</label>
+    <select [(ngModel)]="nuevoProducto.tipo" name="tipo" required>
+      <ng-container *ngFor="let tipo of tiposProducto">
+        <option *ngIf="tipo !== 'alcohol' && tipo !== 'refrescos'" [value]="tipo">
+          {{ tipo }}
+        </option>
+      </ng-container>
+    </select>
+
+    <label>Precio (€):</label>
+    <input type="number" step="0.01" [(ngModel)]="nuevoProducto.precio" name="precio" required />
+
+    <label>URL de imagen:</label>
+    <input type="text" [(ngModel)]="nuevoProducto.imagenUrl" name="imagenUrl" />
+
+    <label>
+      Disponible:
+      <input type="checkbox" [(ngModel)]="nuevoProducto.disponible" name="disponible" />
+    </label>
+
+    <div class="ingrediente-selector">
+      <h3>Seleccionar ingredientes:</h3>
+      <div *ngFor="let ingrediente of ingredientes">
+        <ng-container *ngIf="!tiposExcluidos.includes(ingrediente.tipo)">
+          <label>
+            <input
+              type="checkbox"
+                [checked]="ingredienteSeleccionado(ingrediente.id)"
+                (change)="toggleIngrediente(ingrediente.id)"
+              />
+
+            {{ ingrediente.nombre }}
+          </label>
+
+          <input
+            type="number"
+            *ngIf="ingredienteSeleccionado(ingrediente.id)"
+            placeholder="Cantidad necesaria"
+            [(ngModel)]="cantidades[ingrediente.id]"
+            [ngModelOptions]="{ standalone: true }"
+          />
+        </ng-container>
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn-crear-producto">Crear</button>
+  </form>
+</div>
