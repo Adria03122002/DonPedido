@@ -5,8 +5,10 @@ import { MoreThanOrEqual, Repository, Not, Raw } from "typeorm";
 import { Ubicacion } from "../entity/Ubicacion";
 import { LineaPedido } from "../entity/LineaPedido"; 
 import { Producto } from "../entity/Producto";
+import { VentaHistorica } from "../entity/VentaHistorica";
 
 export class PedidoController {
+    private ventaHistoricaRepo = AppDataSource.getRepository(VentaHistorica);
     private pedidoRepo: Repository<Pedido> = AppDataSource.getRepository(Pedido);
     private lineaRepo: Repository<LineaPedido> = AppDataSource.getRepository(LineaPedido);
     private productoRepo: Repository<Producto> = AppDataSource.getRepository(Producto);
@@ -15,10 +17,9 @@ export class PedidoController {
     // --- MÉTODOS CRUD BÁSICOS (Mantenidos) ---
     async all(req: Request, res: Response) { /* ... */ return this.pedidoRepo.find({ relations: ["lineas", "lineas.producto", "ubicacion"] }); }
     async one(req: Request, res: Response) { /* ... */ return this.pedidoRepo.findOne({ where: { id: parseInt(req.params.id) }, relations: ["lineas", "lineas.producto", "ubicacion"] }); }
-    async delete(req: Request, res: Response) { /* ... */ return "pedido eliminado correctamente"; }
     async actualizarEstado(req: Request, res: Response) { /* ... */ return { mensaje: `estado del pedido actualizado a '${req.body.estado}'` }; }
     async cerrarCaja(req: Request, res: Response) { /* ... */ return `se han eliminado ${0} pedidos del día`; }
-    async marcarComoPagado(req: Request, res: Response) { /* ... */ return { mensaje: `Pedido ${req.params.id} marcado como pagado` }; }
+    
 
     // --- 1. CREAR PEDIDO (POST) ---
     async save(req: Request, res: Response) {
@@ -26,7 +27,6 @@ export class PedidoController {
         console.log('Payload recibido para guardar (POST):', req.body); // DEBUG
 
         try {
-            // 1. Manejar la Ubicación (Búsqueda o Creación Fija)
             const criteriosDeBusqueda: any = { tipo: ubicacion.tipo };
             if (ubicacion.numero !== null) { criteriosDeBusqueda.numero = ubicacion.numero; }
             let ubicacionEntity = await this.ubicacionRepo.findOneBy(criteriosDeBusqueda);
@@ -40,16 +40,14 @@ export class PedidoController {
                 return res.status(400).json({ error: "Ubicación no encontrada. La mesa/ubicación fija no existe en la DB." });
             }
 
-            // 2. Crear la entidad Pedido (Con corrección de TOTAL y formaPago)
             const nuevoPedido = this.pedidoRepo.create({
                 estado, fecha: new Date(fecha), pagado,
-                formaPago: nombreCliente, // Usamos nombreCliente para Recoger
-                total: 0, // Corrección: Total es obligatorio
+                formaPago: nombreCliente,
+                total: 0, 
                 ubicacion: { id: ubicacionEntity.id } 
             });
             const pedidoGuardado = await this.pedidoRepo.save(nuevoPedido);
 
-            // 3. Crear y Guardar las Líneas de Pedido
             const lineasParaGuardar = lineas.map(async (linea: any) => {
                 const productoId = linea?.producto?.id; 
                 if (!productoId || typeof productoId !== 'number') { throw new Error(`ID de producto inválido en la línea de pedido.`); }
@@ -87,26 +85,23 @@ export class PedidoController {
             let pedido = await this.pedidoRepo.findOne({ where: { id: pedidoId }, relations: ["lineas"] });
             if (!pedido) { return res.status(404).json({ error: "Pedido no encontrado para actualizar." }); }
             
-            // 1. ELIMINAR LÍNEAS ANTIGUAS (Para reemplazarlas completamente)
             if (pedido.lineas && pedido.lineas.length > 0) {
                 await this.lineaRepo.remove(pedido.lineas); 
             }
 
-            // 2. ACTUALIZAR PROPIEDADES BÁSICAS
             pedido.estado = estado || pedido.estado;
             pedido.pagado = pagado !== undefined ? pagado : pedido.pagado;
             pedido.formaPago = nombreCliente || pedido.formaPago; 
-            pedido.total = 0; // Se mantiene en 0 para ser calculado en el frontend o por un trigger
+            pedido.total = 0; 
 
             const pedidoActualizado = await this.pedidoRepo.save(pedido);
 
-            // 3. CREAR Y GUARDAR LAS NUEVAS LÍNEAS TOTALES
             const lineasParaGuardar = lineas.map(async (linea: any) => {
                 const productoId = linea?.producto?.id; 
-                if (!productoId || typeof productoId !== 'number') { return null; /* Ignorar línea inválida */ }
+                if (!productoId || typeof productoId !== 'number') { return null; }
 
                 const producto = await this.productoRepo.findOneBy({ id: productoId });
-                if (!producto) { return null; /* Ignorar si el producto no existe */ }
+                if (!producto) { return null; }
 
                 return this.lineaRepo.create({
                     cantidad: Number(linea.cantidad) || 1, modificacion: linea.modificacion,
@@ -114,20 +109,16 @@ export class PedidoController {
                 });
             });
 
-            // 4. Filtrar y Guardar
             const lineasResueltas = await Promise.all(lineasParaGuardar);
-            // FILTRO FINAL: Solo guarda líneas que no son null (las que devolvió el map anterior)
             const lineasFinales = lineasResueltas.filter(linea => linea !== null); 
             
             await this.lineaRepo.save(lineasFinales);
 
-            // 5. Devolver el Pedido Completo (La respuesta final no contendrá la línea defectuosa)
             const pedidoFinal = await this.pedidoRepo.findOne({
                 where: { id: pedidoActualizado.id },
                 relations: ["lineas", "lineas.producto", "ubicacion"],
             });
             
-            // Filtro de la línea 'fantasma' en la respuesta final para prevenir errores de Angular.
             if (pedidoFinal && pedidoFinal.lineas) {
                  pedidoFinal.lineas = pedidoFinal.lineas.filter(linea => linea.producto !== null);
             }
@@ -200,4 +191,57 @@ export class PedidoController {
             return res.status(500).json({ error: 'Fallo al consolidar pedidos activos.' });
         }
     }
+
+
+
+
+
+    async marcarComoPagado(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
+
+        try {
+            const pedido = await this.pedidoRepo.findOneBy({ id });
+
+            if (!pedido) { return res.status(404).json({ error: "Pedido no encontrado." }); }
+
+            pedido.pagado = true;
+            
+            await this.pedidoRepo.save(pedido);
+
+            return res.json({ 
+                mensaje: `Ticket generado. Pedido listo para eliminar.`,
+                pagado: true 
+            });
+            
+        } catch (error) {
+            console.error('ERROR al marcar como pagado:', error);
+            return res.status(500).json({ error: 'Fallo interno al procesar el pago.' });
+        }
+    }
+
+
+    async delete(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
+
+        try {
+            const pedido = await this.pedidoRepo.findOneBy({ id });
+            
+            if (!pedido) {
+                return res.status(404).json({ error: "Pedido no encontrado." });
+            }
+            
+            if (!pedido.pagado) {
+                return res.status(403).json({ error: "No se puede eliminar un pedido activo. Debe marcarse como pagado o anularse mediante un cambio de estado." });
+            }
+            
+            await this.pedidoRepo.delete(id); 
+
+            return res.json({ mensaje: "Pedido eliminado correctamente del sistema principal." });
+        } catch (error) {
+            console.error('ERROR al eliminar pedido:', error);
+            return res.status(500).json({ error: 'Fallo al eliminar el pedido.' });
+        }
+    }
+
+
 }
