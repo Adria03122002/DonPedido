@@ -46,6 +46,10 @@
             [(ngModel)]="cantidades[ingrediente.id]"
             [ngModelOptions]="{ standalone: true }"
           />
+
+          <span *ngIf="ingredienteSeleccionado(ingrediente.id)" class="unidad-consumo">
+              {{ ingrediente.unidad }}
+          </span>
         </ng-container>
       </div>
 

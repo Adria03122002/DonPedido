@@ -13,7 +13,7 @@ const routes: Routes = [
   {
     path: 'barra',
     loadChildren: () =>
-      import('./views/admin/admin.module').then(m => m.AdminModule),
+      import('./views/vistas/barra/admin.module').then(m => m.AdminModule),
   },
 ];
 

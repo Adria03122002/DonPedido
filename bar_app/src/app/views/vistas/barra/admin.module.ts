@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { AdminRoutingModule } from './admin-routing.module';
 
 import { AdminComponent } from './admin.component';
-import { StockControlComponent } from '../vistas/stock-control/stock-control.component';
-import { CrearIngredienteComponent } from '../vistas/crear-ingrediente/crear-ingrediente.component';
+import { StockControlComponent } from '../stock-control/stock-control.component';
+import { CrearIngredienteComponent } from '../crear-ingrediente/crear-ingrediente.component';
 import { TiempoTranscurridoPipe } from 'src/app/pipes/tiempo-transcurrido.pipe';
-import { PedidoComponent } from '../vistas/pedido/pedido.component';
-import { CrearProductoComponent } from '../vistas/crear-producto/crear-producto.component';
-import { ProductoListaComponent } from '../vistas/producto-lista/producto-lista.component';
-import { CrearPedidoComponent } from '../vistas/crear-pedido/crear-pedido.component';
+import { PedidoComponent } from '../pedido/pedido.component';
+import { CrearProductoComponent } from '../crear-producto/crear-producto.component';
+import { ProductoListaComponent } from '../producto-lista/producto-lista.component';
+import { CrearPedidoComponent } from '../crear-pedido/crear-pedido.component';
+
 @NgModule({
   declarations: [
     AdminComponent,

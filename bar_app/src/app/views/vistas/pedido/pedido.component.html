@@ -1,46 +1,58 @@
 <h3>Pedidos del día</h3>
 <div
-  *ngFor="let pedido of pedidos"
-  class="pedido-card"
-  [ngClass]="{
-    'en-preparacion': pedido.estado === 'en preparación',
-    servido: pedido.estado === 'servido'
-  }"
+    *ngFor="let pedido of pedidos"
+    class="pedido-card"
+    [ngClass]="{
+      'en-preparacion': pedido.estado === 'en preparación',
+      servido: pedido.estado === 'servido'
+    }"
 >
-  <div class="pedido-header">
-    <h3>Mesa {{ pedido.ubicacion?.numero || pedido.nombreCliente || pedido.ubicacion?.tipo }}</h3>
-    <div class="pedido-total">
-          Total: {{ calcularTotal(pedido) | currency:'EUR' }}
+    <div class="pedido-header">
+        <h3>Mesa {{ pedido.ubicacion?.numero || pedido.nombreCliente || pedido.ubicacion?.tipo }}</h3>
+        <div class="pedido-total">
+            Total: {{ calcularTotal(pedido) | currency:'EUR' }}
+        </div>
+        
+        <div
+            class="estado-tag"
+            [ngClass]="{
+              'estado-preparacion': pedido.estado === 'en preparación',
+              'estado-servido': pedido.estado === 'servido'
+            }"
+        >
+          {{ pedido.estado }}
+        </div>
     </div>
-  </div>
 
-  <div class="linea-producto" *ngFor="let linea of pedido.lineas">
+    <div class="linea-producto" *ngFor="let linea of pedido.lineas">
+        <ng-container *ngIf="linea.producto">
+            <span>{{ linea.cantidad }}x {{ linea.producto.nombre }}</span> 
+            
+            <span *ngIf="linea.modificacion" class="linea-mod">({{ linea.modificacion }})</span>
+        </ng-container>
+        
+        <span *ngIf="!linea.producto">Error de datos (Producto no encontrado)</span>
+    </div>
     
-      <ng-container *ngIf="linea.producto">
-          
-          <span>{{ linea.cantidad }}x {{ linea.producto.nombre }}</span> 
-          
-          <span *ngIf="linea.modificacion" class="linea-mod">({{ linea.modificacion }})</span>
+    <div class="fecha-info">
+      Hace {{ pedido.fecha | tiempoTranscurrido }}
+    </div>
+
+    <div class="acciones-contenedor">
       
-      </ng-container>
-      <span *ngIf="!linea.producto">Error de datos (Producto no encontrado)</span>
-  </div>
-  
-  <div class="fecha-info">
-    Hace {{ pedido.fecha | tiempoTranscurrido }}
-  </div>
-
-  <div class="acciones-contenedor">
-    
-    <button 
-        class="btn-modificar" 
-        [routerLink]="['/camarero/mesa', pedido.ubicacion?.numero]" 
-    >
-      Ver / Modificar
-    </button>
-    
-    <button (click)="marcarPagado(pedido.id)" class="btn-pagar">
-      Marcar como pagado
-    </button>
-  </div>
+        <button 
+            class="btn-modificar" 
+            [routerLink]="['/camarero/mesa', pedido.ubicacion?.numero]" 
+        >
+          Ver / Modificar
+        </button>
+        
+        <button (click)="eliminarPedido(pedido.id)" class="btn-eliminar">
+            Eliminar Comanda
+        </button>
+      
+        <button (click)="marcarPagado(pedido.id)" class="btn-pagar">
+          Marcar como pagado
+        </button>
+    </div>
 </div>

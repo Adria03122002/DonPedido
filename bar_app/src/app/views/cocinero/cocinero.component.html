@@ -1,0 +1,31 @@
+<div class="caja-superior">
+  <button class="boton-salir" (click)="salir()">Salir</button>
+</div>
+
+
+<div class="mesa-card" *ngFor="let pedido of pedidos">
+  <div class="mesa-header">
+    <h3>Mesa {{ pedido.ubicacion?.numero || pedido.ubicacion?.tipo }}</h3>
+    <div class="tiempo-transcurrido">
+      Hace {{ calcularTiempoTranscurrido(pedido.fecha) }}
+    </div>
+    <span class="estado-tag">{{ pedido.estado }}</span>
+  </div>
+
+  <div *ngFor="let linea of pedido.lineas" 
+      class="pedido-linea" 
+      [ngClass]="{ 'linea-con-mod': linea.modificacion }">
+    <div class="pedido-producto">{{ linea.cantidad }}x {{ linea.producto.nombre }}</div>
+    <div class="pedido-mod" *ngIf="linea.modificacion">{{ linea.modificacion }}</div>
+    <div class="pedido-mod vacia" *ngIf="!linea.modificacion">Sin modificaciones</div>
+  </div>
+
+
+
+    <button 
+      *ngIf="pedido.estado !== 'servido'"
+      (click)="marcarComoTerminado(pedido.id)"
+      class="btn-servir">
+      Marcar como terminado
+    </button>
+</div>

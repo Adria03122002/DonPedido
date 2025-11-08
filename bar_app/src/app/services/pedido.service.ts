@@ -28,7 +28,7 @@ export class PedidoService {
     return this.http.put<Pedido>(`${this.apiUrl}/${id}`, pedidoPayload);
   }
 
-  eliminarPedido(id: number): Observable<any> {
+  delete(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 

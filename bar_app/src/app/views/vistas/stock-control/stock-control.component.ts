@@ -9,28 +9,15 @@ import { Ingrediente } from 'src/app/interfaces/ingrediente';
 })
 export class StockControlComponent implements OnInit {
   ingredientes: Ingrediente[] = [];
-  tiposIngrediente: string[] = [
-  'refresco',
-  'alcohol',
-  'pan',
-  'carne',
-  'pescado',
-  'verdura',
-  'fruta',
-  'queso',
-  'embutido',
-  'dulce',
-  'salsa',
-  'otro'
-];
+  tiposIngrediente: string[] = [];
 
- 
   ingredienteEditando: Ingrediente = this.ingredientes[0];
 
   constructor(private ingredienteService: IngredienteService) {}
 
   ngOnInit() {
     this.cargarIngredientes();
+    this.tiposIngrediente = this.ingredienteService.getTiposIngrediente();
   }
 
   cargarIngredientes() {

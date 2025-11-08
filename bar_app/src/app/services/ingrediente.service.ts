@@ -9,6 +9,29 @@ import { Ingrediente } from '../interfaces/ingrediente';
 export class IngredienteService {
   private apiUrl = 'http://localhost:3000/bar_app/ingredientes';
 
+  private readonly tiposIngrediente: string[] = [
+    'refresco',
+    'alcohol',
+    'pan',
+    'carne',
+    'pescado',
+    'marisco',
+    'verdura',
+    'fruta',
+    'queso',
+    'lácteo',
+    'huevo',
+    'embutido',
+    'dulce',
+    'salsa',
+    'aceite',
+    'harina',
+    'arroz',
+    'especias',
+    'preparado',
+    'otro'
+  ];
+
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<Ingrediente[]> {
@@ -27,5 +50,9 @@ export class IngredienteService {
     return this.http.put<Ingrediente>(`${this.apiUrl}/${id}`, ingrediente);
   }
 
+
+  getTiposIngrediente(): string[] {
+      return [...this.tiposIngrediente]; 
+    }
 
 }

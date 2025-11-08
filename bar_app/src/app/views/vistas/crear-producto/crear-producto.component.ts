@@ -47,19 +47,29 @@ export class CrearProductoComponent implements OnInit {
     this.cargarIngredientes();
   }
 
-
-
   tiposProducto: string[] = [
-  'hamburguesa',
-  'bocadillo',
-  'pizza',
-  'ensalada',
-  'ración',
-  'postre',
-  'desayuno',
-  'cafetería',
-  'otros'
-];
+    'hamburguesa',
+    'bocadillo',
+    'pizza',
+    'ensalada',
+    'ración',
+    'pasta',           // <--- NUEVO
+    'plato_combinado', // <--- NUEVO
+    'sopa_crema',      // <--- NUEVO
+    'postre',
+    'pastelería',      // <--- NUEVO
+    'helado',          // <--- NUEVO
+    'desayuno',
+    'cafetería',
+    'cerveza',         // <--- NUEVO (Clasificación de bebidas)
+    'vino',            // <--- NUEVO
+    'zumo_refresco',   // <--- NUEVO
+    'extra',           // <--- NUEVO (Para guarniciones/salsas)
+    'refresco',
+    'otros'
+  ];
+
+
 
   tiposExcluidos: string[] = ['alcohol', 'refrescos'];
 
@@ -90,23 +100,40 @@ export class CrearProductoComponent implements OnInit {
   }
 
   crearProducto(): void {
-    // Crear el producto
-    const productoAEnviar: Producto = { ...this.nuevoProducto };
-    this.productoService.create(productoAEnviar).subscribe(productoCreado => {
-      const relaciones: ProductoIngrediente[] = this.ingredientesSeleccionados.map(id => ({
-        id: 0,
-        producto: productoCreado,
-        ingrediente: this.ingredientes.find(i => i.id === id)!,
-        cantidadNecesaria: this.cantidades[id]
-      }));
+      if (this.ingredientesSeleccionados.length === 0) {
+          alert('ADVERTENCIA: Debes seleccionar al menos un ingrediente para crear la receta del producto.');
+          return;
+      }
 
-      relaciones.forEach(relacion => {
-        this.productoIngredienteService.create(relacion).subscribe();
+      for (const id of this.ingredientesSeleccionados) {
+          const cantidad = this.cantidades[id];
+          
+          if (cantidad == null || cantidad <= 0) {
+              
+              const ingrediente = this.ingredientes.find(i => i.id === id);
+              
+              alert(`ERROR: La cantidad necesaria para ${ingrediente?.nombre || 'un ingrediente seleccionado'} debe ser un número positivo.`);
+              return; 
+          }
+      }
+
+      const productoAEnviar: Producto = { ...this.nuevoProducto };
+      this.productoService.create(productoAEnviar).subscribe(productoCreado => {
+        
+        const relaciones: ProductoIngrediente[] = this.ingredientesSeleccionados.map(id => ({
+          id: 0,
+          producto: productoCreado,
+          ingrediente: this.ingredientes.find(i => i.id === id)!,
+          cantidadNecesaria: this.cantidades[id] 
+        }));
+
+        relaciones.forEach(relacion => {
+          this.productoIngredienteService.create(relacion).subscribe();
+        });
+
+        alert('Producto creado correctamente');
+        this.resetFormulario();
       });
-
-      alert('Producto creado correctamente');
-      this.resetFormulario();
-    });
   }
 
   resetFormulario(): void {

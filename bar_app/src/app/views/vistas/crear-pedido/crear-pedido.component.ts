@@ -5,7 +5,6 @@ import { PedidoService } from 'src/app/services/pedido.service';
 import { ProductoService } from 'src/app/services/producto.service';
 import { Router } from '@angular/router';
 
-// La interfaz LineaPedido es lo que estás manejando en el frontend
 interface LineaActual {
     producto: Producto;
     cantidad: number;
@@ -19,28 +18,24 @@ interface LineaActual {
 })
 export class CrearPedidoComponent implements OnInit {
     
-    // --- PROPIEDADES ---
     productosMenu: Producto[] = [];
-    lineasPedido: LineaActual[] = []; // Líneas que se añadirán al pedido
+    lineasPedido: LineaActual[] = []; 
     ubicacion: string = '';
     mesasDisponibles: number[] = Array.from({length: 12}, (_, i) => i + 1);
     nombreCliente: any;
 
-    // --- CONSTRUCTOR ---
     constructor(
         private productoService: ProductoService,
         private pedidoService: PedidoService,
         private router: Router
     ) { }
 
-    // --- NG ON INIT ---
     ngOnInit(): void {
         this.productoService.getAll().subscribe(productos => {
             this.productosMenu = productos.filter(p => p.disponible);
         });
     }
 
-    // --- MÉTODOS AUXILIARES DE VISTA ---
     agregarProducto(producto: Producto): void {
         const lineaExistente = this.lineasPedido.find(l => l.producto.id === producto.id);
 
@@ -65,7 +60,6 @@ export class CrearPedidoComponent implements OnInit {
     
 
     enviarPedido(): void {
-        // 1. Validaciones
         if (this.lineasPedido.length === 0 || !this.ubicacion) {
             alert('Debes añadir productos y seleccionar una ubicación.');
             return;
@@ -75,19 +69,20 @@ export class CrearPedidoComponent implements OnInit {
             return;
         }
 
-        // 2. Mapeo de Identificadores
         const esMesa = this.ubicacion.includes('Mesa');
         const tipoUbicacion = esMesa ? 'mesa' : 'recoger';
         const numeroMesa = esMesa ? parseInt(this.ubicacion.split(' ')[1]) : null;
 
-        // PASO CLAVE: Verificar si ya existe un pedido activo 
+        if (!esMesa) {
+            this.ejecutarCreacion(numeroMesa, tipoUbicacion);
+            return; 
+        }
+
         this.pedidoService.getPedidoActivoPorMesa(numeroMesa!).subscribe({
             next: (pedidoActivo) => {
-                // Caso 1: PEDIDO ACTIVO ENCONTRADO (HACER UPDATE)
                 this.ejecutarActualizacion(pedidoActivo, numeroMesa, tipoUbicacion);
             },
             error: (err) => {
-                // Verificamos el código de estado HTTP para 404/No Content.
                 if (err.status === 404) {
                     this.ejecutarCreacion(numeroMesa, tipoUbicacion);
                 } else {
@@ -98,9 +93,7 @@ export class CrearPedidoComponent implements OnInit {
         });
     }
 
-    // 1. Ejecuta la CREACIÓN (POST)
     ejecutarCreacion(numeroMesa: number | null, tipoUbicacion: string): void {
-        // En este caso, solo enviamos las líneas recién añadidas (this.lineasPedido)
         const nuevoPayload = this.construirPayload(numeroMesa, tipoUbicacion, this.lineasPedido);
         
         this.pedidoService.crearPedido(nuevoPayload).subscribe({
@@ -127,25 +120,20 @@ export class CrearPedidoComponent implements OnInit {
         
     }
 
-    // --- NUEVO MÉTODO PARA SUMAR PRODUCTOS IDÉNTICOS ---
     consolidarLineas(lineas: any[]): any[] {
         const mapaConsolidado = new Map();
 
         lineas.forEach(linea => {
-            // Usamos el ID del producto y la modificación como clave única
             const key = `${linea.producto.id}-${linea.modificacion}`;
 
             if (mapaConsolidado.has(key)) {
-                // Si ya existe, sumar la cantidad
                 const lineaExistente = mapaConsolidado.get(key);
                 lineaExistente.cantidad += linea.cantidad;
             } else {
-                // Si no existe, añadir una copia de la línea
                 mapaConsolidado.set(key, { ...linea });
             }
         });
 
-        // Devolver el array de líneas consolidadas
         return Array.from(mapaConsolidado.values());
     }
 
@@ -174,7 +162,6 @@ export class CrearPedidoComponent implements OnInit {
         };
     }
     
-    // --- RESET FORM ---
     resetForm(): void {
         this.lineasPedido = [];
         this.ubicacion = '';
