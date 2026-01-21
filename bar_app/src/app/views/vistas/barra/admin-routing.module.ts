@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminComponent } from './admin.component';
-import { StockControlComponent } from '../vistas/stock-control/stock-control.component';
-import { CrearIngredienteComponent } from '../vistas/crear-ingrediente/crear-ingrediente.component';
-import { CrearPedidoComponent } from '../vistas/crear-pedido/crear-pedido.component';
-import { PedidoComponent } from '../vistas/pedido/pedido.component';
-import { CrearProductoComponent } from '../vistas/crear-producto/crear-producto.component';
-import { ProductoListaComponent } from '../vistas/producto-lista/producto-lista.component';
+import { PedidoComponent } from '../pedido/pedido.component';
+import { StockControlComponent } from '../stock-control/stock-control.component';
+import { CrearIngredienteComponent } from '../crear-ingrediente/crear-ingrediente.component';
+import { CrearProductoComponent } from '../crear-producto/crear-producto.component';
+import { CrearPedidoComponent } from '../crear-pedido/crear-pedido.component';
+import { ProductoListaComponent } from '../producto-lista/producto-lista.component';
 
 const routes: Routes = [
   {

@@ -12,7 +12,6 @@ import { PedidoService } from './services/pedido.service';
 import { ProductoService } from './services/producto.service';
 import { LineaPedidoService } from './services/linea-pedido.service';
 import { ProductoIngredienteService } from './services/producto-ingrediente.service';
-import { UbicacionService } from './services/ubicacion.service';
 import { FormsModule } from '@angular/forms'; 
 import { CommonModule } from '@angular/common';
 
@@ -30,7 +29,7 @@ declarations: [
     HttpClientModule,
     CommonModule
   ],
-  providers: [IngredienteService, PedidoService, ProductoService, LineaPedidoService, ProductoIngredienteService, UbicacionService  ],
+  providers: [IngredienteService, PedidoService, ProductoService, LineaPedidoService, ProductoIngredienteService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

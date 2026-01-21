@@ -15,7 +15,7 @@ export class Producto {
   @Column('decimal')
   precio: number;
 
-  @Column()
+  @Column({ nullable: true , default: ""}) 
   imagenUrl: string;
 
   @Column({ default: true })

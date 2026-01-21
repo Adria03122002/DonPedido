@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Ingrediente } from 'src/app/interfaces/ingrediente';
 import { IngredienteService } from 'src/app/services/ingrediente.service';
 
@@ -7,28 +7,18 @@ import { IngredienteService } from 'src/app/services/ingrediente.service';
   templateUrl: './crear-ingrediente.component.html',
   styleUrls: ['./crear-ingrediente.component.css']
 })
-export class CrearIngredienteComponent {
-   nuevoIngrediente: Ingrediente = {} as Ingrediente;
+export class CrearIngredienteComponent implements OnInit {
+  nuevoIngrediente: Ingrediente = {} as Ingrediente;
+  tiposIngrediente: string[] = [];
   constructor(private ingredienteService: IngredienteService) {}
 
-    tiposIngrediente: string[] = [
-    'refresco',
-    'alcohol',
-    'pan',
-    'carne',
-    'pescado',
-    'verdura',
-    'fruta',
-    'queso',
-    'embutido',
-    'dulce',
-    'salsa',
-    'otro'
-  ];
+  ngOnInit(){
+    this.tiposIngrediente = this.ingredienteService.getTiposIngrediente();
+  }
 
    anyadirIngrediente() {
-    if (this.nuevoIngrediente.stock < 0) {
-      alert('El stock no puede ser negativo');
+    if (this.nuevoIngrediente.cantidad < 0) {
+      alert('La cantidad no puede ser negativa');
       return;
     }
 

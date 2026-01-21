@@ -9,28 +9,14 @@ import { Ingrediente } from 'src/app/interfaces/ingrediente';
 })
 export class StockControlComponent implements OnInit {
   ingredientes: Ingrediente[] = [];
-  tiposIngrediente: string[] = [
-  'refresco',
-  'alcohol',
-  'pan',
-  'carne',
-  'pescado',
-  'verdura',
-  'fruta',
-  'queso',
-  'embutido',
-  'dulce',
-  'salsa',
-  'otro'
-];
-
- 
-  ingredienteEditando: Ingrediente = this.ingredientes[0];
+  tiposIngrediente: string[] = [];
+  ingredienteEditando: Ingrediente | null = null;
 
   constructor(private ingredienteService: IngredienteService) {}
 
   ngOnInit() {
     this.cargarIngredientes();
+    this.tiposIngrediente = this.ingredienteService.getTiposIngrediente();
   }
 
   cargarIngredientes() {
@@ -39,29 +25,29 @@ export class StockControlComponent implements OnInit {
     });
   }
 
- 
-
   editarIngrediente(ingrediente: Ingrediente) {
     this.ingredienteEditando = { ...ingrediente };
   }
 
-  guardarCambios() {
-    console.log(this.ingredienteEditando)
-    if (!this.ingredienteEditando) return;
-
-    this.ingredienteService.update(this.ingredienteEditando.id ,this.ingredienteEditando)
-      .subscribe({
-        next: () => {
-          alert("Ingrediente actualizado correctamente");
-          this.ingredienteEditando = this.ingredientes[-1];
-          this.cargarIngredientes(); // vuelve a cargar la lista
-        },
-        error: () => alert("Error al actualizar el ingrediente"),
-      });
+  guardarCambios(): void {
+    if (this.ingredienteEditando && typeof this.ingredienteEditando.id === 'number') {
+      
+      this.ingredienteService.update(this.ingredienteEditando.id, this.ingredienteEditando)
+        .subscribe({
+          next: () => {
+            alert("Ingrediente actualizado correctamente");
+            this.ingredienteEditando = null; 
+            this.cargarIngredientes(); 
+          },
+          error: () => alert("Error al actualizar el ingrediente"),
+        });
+        
+    } else {
+      alert("No hay un ingrediente seleccionado o el ID no es válido.");
+    }
   }
 
   cancelarEdicion() {
-    this.ingredienteEditando = this.ingredientes[-1];
+    this.ingredienteEditando = null;
   }
-
 }

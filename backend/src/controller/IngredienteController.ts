@@ -1,54 +1,104 @@
-import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
+import { Request, Response } from "express";
 import { Ingrediente } from "../entity/Ingrediente";
+import { LessThan } from "typeorm";
 
 export class IngredienteController {
-  private ingredienteRepo = AppDataSource.getRepository(Ingrediente);
+    private repo = AppDataSource.getRepository(Ingrediente);
 
-  // Obtener todos los ingredientes
-  async all(req: Request, res: Response) {
-    const ingredientes = await this.ingredienteRepo.find();
-    if (!ingredientes || ingredientes.length === 0) {
-      return "No hay ingredientes registrados";
+    // Ver stock actual (Lista completa)
+    async all(req: Request, res: Response) {
+        try {
+            return await this.repo.find({
+                order: { nombre: "ASC" }
+            });
+        } catch (error) {
+            res.status(500);
+            return { message: "Error al cargar el inventario" };
+        }
     }
-    return ingredientes;
-  }
 
-  // Obtener un ingrediente por ID
-  async one(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
-    const ingrediente = await this.ingredienteRepo.findOneBy({ id });
-
-    if (!ingrediente) {
-      return "Ingrediente no encontrado";
+    // Obtener un solo ingrediente por ID
+    async one(req: Request, res: Response) {
+        const { id } = req.params as any;
+        try {
+            const item = await this.repo.findOneBy({ id: Number(id) });
+            if (!item) {
+                res.status(404);
+                return { message: "Ingrediente no encontrado" };
+            }
+            return item;
+        } catch (error) {
+            res.status(500);
+            return { message: "Error al buscar el ingrediente" };
+        }
     }
-    return ingrediente;
-  }
 
-  // Guardar o actualizar un ingrediente
-  async save(req: Request, res: Response) {
-    try {
-      const data = req.body;
+    // Añadir o actualizar ingrediente
+    async save(req: Request, res: Response) {
+        const { nombre, cantidad, unidad } = req.body;
 
-      let ingrediente = data.id
-        ? await this.ingredienteRepo.findOneBy({ id: data.id })
-        : new Ingrediente();
+        try {
+            const item = new Ingrediente();
+            item.nombre = String(nombre);
+            item.cantidad = Number(cantidad);
+            item.unidad = String(unidad || "uds");
 
-      if (!ingrediente) ingrediente = new Ingrediente();
-
-      ingrediente.nombre = data.nombre;
-      ingrediente.stock = data.stock;
-      ingrediente.unidad = data.unidad;
-      ingrediente.tipo = data.tipo;
-      ingrediente.disponible = data.stock > 0;
-
-      const saved = await this.ingredienteRepo.save(ingrediente);
-      return saved;
-
-    } catch (error) {
-      console.error("Error al guardar ingrediente:", error);
-      return { mensaje: "Error al guardar el ingrediente" };
+            return await this.repo.save(item);
+        } catch (error: any) {
+            res.status(500);
+            return { message: "Error al procesar el ingrediente", error: error.message };
+        }
     }
-  }
 
+    // Ajuste rápido de inventario (Entrada de proveedor o merma)
+    async updateStock(req: Request, res: Response) {
+        const { id } = req.params as any;
+        const { nuevaCantidad } = req.body;
+
+        try {
+            const item = await this.repo.findOneBy({ id: Number(id) });
+            if (!item) {
+                res.status(404);
+                return { message: "Ingrediente no encontrado" };
+            }
+
+            item.cantidad = Number(nuevaCantidad);
+            return await this.repo.save(item);
+        } catch (error) {
+            res.status(500);
+            return { message: "Error al actualizar stock" };
+        }
+    }
+
+    // Eliminar ingrediente del sistema
+    async remove(req: Request, res: Response) {
+        const { id } = req.params as any;
+        try {
+            const item = await this.repo.findOneBy({ id: Number(id) });
+            if (!item) {
+                res.status(404);
+                return { message: "El ingrediente no existe" };
+            }
+            await this.repo.remove(item);
+            return { message: "Ingrediente eliminado del almacén" };
+        } catch (error) {
+            res.status(500);
+            return { message: "Error al eliminar el ingrediente" };
+        }
+    }
+
+    // LÓGICA DE NEGOCIO: Obtener ingredientes con poco stock (menos de 5 unidades)
+    async getBajoStock(req: Request, res: Response) {
+        try {
+            return await this.repo.find({
+                where: {
+                    cantidad: LessThan(5)
+                }
+            });
+        } catch (error) {
+            res.status(500);
+            return { message: "Error al consultar alertas de stock" };
+        }
+    }
 }
