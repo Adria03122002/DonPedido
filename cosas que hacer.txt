@@ -1,0 +1,7 @@
+- Solucionar error en Listar Producto (No muestra ingredientes y cuando salvas se crea uno nuevo)
+- Ver los errores que van saliendo cuando creas un pedido
+- Crear mas ingredientes
+- Crear mas Productos
+- Cambiar la interfaz para pedir
+- Crear interfaz para el Camarero
+- Cambiar interfaz para Cocineros mas actualizar cada 20 segundos automáticamente

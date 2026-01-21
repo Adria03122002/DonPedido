@@ -17,8 +17,8 @@ export class CrearIngredienteComponent implements OnInit {
   }
 
    anyadirIngrediente() {
-    if (this.nuevoIngrediente.stock < 0) {
-      alert('El stock no puede ser negativo');
+    if (this.nuevoIngrediente.cantidad < 0) {
+      alert('La cantidad no puede ser negativa');
       return;
     }
 

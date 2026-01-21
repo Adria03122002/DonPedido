@@ -5,6 +5,6 @@ export interface LineaPedido {
   id: number;
   producto: Producto;
   cantidad: number;
-  modificacion?: string;
+  modificacion: string;
   pedido: Pedido;
 }

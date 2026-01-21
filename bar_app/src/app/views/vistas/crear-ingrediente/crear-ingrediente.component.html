@@ -1,6 +1,6 @@
   <form (ngSubmit)="anyadirIngrediente()">
     <input type="text" placeholder="Nombre" [(ngModel)]="nuevoIngrediente.nombre" name="nombre" required />
-    <input type="number" placeholder="Stock" [(ngModel)]="nuevoIngrediente.stock" name="stock" required />
+    <input type="number" placeholder="Cantidad" [(ngModel)]="nuevoIngrediente.cantidad" name="cantidad" required />
     <input type="text" placeholder="Unidad" [(ngModel)]="nuevoIngrediente.unidad" name="unidad" required />
 
     <select [(ngModel)]="nuevoIngrediente.tipo" name="tipo">

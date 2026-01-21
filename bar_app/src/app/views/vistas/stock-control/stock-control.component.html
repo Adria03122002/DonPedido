@@ -19,16 +19,16 @@
         <tbody>
           <tr *ngFor="let ingrediente of ingredientes">
             <ng-container *ngIf="ingredienteEditando?.id === ingrediente.id; else vistaNormal">
-              <td><input [(ngModel)]="ingredienteEditando.nombre" /></td>
-              <td><input type="number" [(ngModel)]="ingredienteEditando.stock" /></td>
-              <td><input [(ngModel)]="ingredienteEditando.unidad" /></td>
+              <td><input [(ngModel)]="ingredienteEditando!.nombre" /></td>
+              <td><input type="number" [(ngModel)]="ingredienteEditando!.cantidad" /></td>
+              <td><input [(ngModel)]="ingredienteEditando!.unidad" /></td>
               <td>
-                <select [(ngModel)]="ingredienteEditando.tipo">
+                <select [(ngModel)]="ingredienteEditando!.tipo">
                   <option *ngFor="let tipo of tiposIngrediente" [value]="tipo">{{ tipo }}</option>
                 </select>
               </td>
               <td>
-                <select [(ngModel)]="ingredienteEditando.disponible">
+                <select [(ngModel)]="ingredienteEditando!.disponible">
                   <option [value]="true">Sí</option>
                   <option [value]="false">No</option>
                 </select>
@@ -42,7 +42,7 @@
 
             <ng-template #vistaNormal>
               <td>{{ ingrediente.nombre }}</td>
-              <td>{{ ingrediente.stock }}</td>
+              <td>{{ ingrediente.cantidad }}</td>
               <td>{{ ingrediente.unidad }}</td>
               <td>{{ ingrediente.tipo || '-' }}</td>
               <td>

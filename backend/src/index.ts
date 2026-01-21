@@ -8,16 +8,15 @@ const cors = require('cors');
 
 AppDataSource.initialize().then(async () => {
 
-    // create express app
+    
     const app = express()
      app.use(cors({
-        origin: '*', // Dirección de origen permitida 
-        methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos 
+        origin: '*', 
+        methods: ['GET', 'POST', 'PUT', 'DELETE'], 
         allowedHeaders: ['*']
     }));
     app.use(bodyParser.json())
 
-    // Crear un router para aplicar el prefijo /bar_app
     const router = express.Router();
 
     Routes.forEach(route => {
@@ -26,7 +25,6 @@ AppDataSource.initialize().then(async () => {
         const controllerInstance = new (route.controller as any)();
         const result = await controllerInstance[route.action](req, res, next);
 
-        // Solo respondemos si el resultado existe y no se ha enviado aún
         if (result !== undefined && !res.headersSent) {
             if (typeof result === 'object') {
             res.json(result);
@@ -44,9 +42,6 @@ AppDataSource.initialize().then(async () => {
     });
     });
 
-
-
-    // Montar el router con prefijo
     app.use("/bar_app", router);
 
 

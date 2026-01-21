@@ -8,7 +8,7 @@
     }"
 >
     <div class="pedido-header">
-        <h3>Mesa {{ pedido.ubicacion?.numero || pedido.nombreCliente || pedido.ubicacion?.tipo }}</h3>
+        <h3>Mesa {{ pedido.ubicacion || pedido.nombreCliente }}</h3>
         <div class="pedido-total">
             Total: {{ calcularTotal(pedido) | currency:'EUR' }}
         </div>
@@ -42,7 +42,7 @@
       
         <button 
             class="btn-modificar" 
-            [routerLink]="['/camarero/mesa', pedido.ubicacion?.numero]" 
+            [routerLink]="['/camarero/mesa', pedido.ubicacion]" 
         >
           Ver / Modificar
         </button>

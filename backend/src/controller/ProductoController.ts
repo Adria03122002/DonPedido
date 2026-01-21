@@ -1,85 +1,66 @@
-import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
+import { Request, Response } from "express";
 import { Producto } from "../entity/Producto";
-import { ProductoIngrediente } from "../entity/ProductoIngrediente";
 
 export class ProductoController {
-  private productoRepository = AppDataSource.getRepository(Producto);
+    private repo = AppDataSource.getRepository(Producto);
 
-  async all(req: Request, res: Response) {
-    const productos = await this.productoRepository.find({
-      where: { disponible: true },
-      relations: ["ingredientes", "ingredientes.ingrediente"]
-    });
-
-    if (!productos || productos.length === 0) {
-      return "No hay productos disponibles";
+    // Listar todos los productos (Carta)
+    async all(req: Request, res: Response) {
+        return this.repo.find({
+            relations: ["ingredientes", "ingredientes.ingrediente"]
+        });
     }
 
-    return productos;
-  }
-
-  async one(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
-    const producto = await this.productoRepository.findOne({
-      where: { id },
-      relations: ["ingredientes", "ingredientes.ingrediente"]
-    });
-
-    if (!producto) {
-      return "Producto no encontrado";
+    // Obtener un producto específico
+    async one(req: Request, res: Response) {
+        const { id } = req.params as any;
+        return this.repo.findOne({
+            where: { id: Number(id) },
+            relations: ["ingredientes", "ingredientes.ingrediente"]
+        });
     }
 
-    return producto;
-  }
+    // Crear o editar producto
+    async save(req: Request, res: Response) {
+        const { nombre, tipo, precio, imagenUrl, disponible } = req.body;
 
-  async save(req: Request, res: Response) {
-    try {
-      const producto = await this.productoRepository.save(req.body);
-      const saved = await this.productoRepository.findOne({
-        where: { id: producto.id },
-        relations: ["ingredientes", "ingredientes.ingrediente"]
-      });
-      return saved;
-    } catch (error) {
-      console.error("Error al guardar producto:", error);
-      return "Error al guardar el producto";
+        try {
+            const producto = new Producto();
+            producto.nombre = nombre;
+            producto.tipo = tipo;
+            producto.precio = Number(precio);
+            producto.imagenUrl = imagenUrl || "";
+            producto.disponible = disponible !== undefined ? disponible : true;
+
+            return await this.repo.save(producto);
+        } catch (error: any) {
+            res.status(500);
+            return { message: "Error al guardar el producto", error: error.message };
+        }
     }
-  }
 
-  async delete(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
+    // Alternar disponibilidad (Agotado/Disponible)
+    async toggleStatus(req: Request, res: Response) {
+        const { id } = req.params as any;
+        const producto = await this.repo.findOneBy({ id: Number(id) });
 
-    try {
-      const piRepo = AppDataSource.getRepository(ProductoIngrediente);
-      await piRepo.delete({ producto: { id } });
-      
-      await this.productoRepository.delete(id);
+        if (!producto) {
+            res.status(404);
+            return { message: "Producto no encontrado" };
+        }
 
-      return { message: "Producto y sus ingredientes eliminados correctamente" };
-    } catch (error) {
-      console.error("Error al eliminar producto:", error);
-      return res.status(500).send("Error al eliminar producto");
+        producto.disponible = !producto.disponible;
+        return await this.repo.save(producto);
     }
-  }
 
-  async update(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
-
-    try {
-      await this.productoRepository.update(id, req.body);
-
-      const updated = await this.productoRepository.findOne({
-        where: { id },
-        relations: ["ingredientes", "ingredientes.ingrediente"]
-      });
-
-      return updated;
-    } catch (error) {
-      console.error("Error al actualizar producto:", error);
-      return res.status(500).send("Error al actualizar producto");
+    // Eliminar producto
+    async delete(req: Request, res: Response) {
+        const { id } = req.params as any;
+        const prod = await this.repo.findOneBy({ id: Number(id) });
+        if (!prod) return { message: "No existe el producto" };
+        
+        await this.repo.remove(prod);
+        return { message: "Producto eliminado correctamente" };
     }
-  }
-
-
 }

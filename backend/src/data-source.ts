@@ -1,11 +1,12 @@
 import "reflect-metadata"
 import { DataSource } from "typeorm"
-import { Ubicacion } from './entity/Ubicacion';
 import { Producto } from './entity/Producto';
 import { LineaPedido } from './entity/LineaPedido';
 import { Pedido } from "./entity/Pedido";
 import { Ingrediente } from "./entity/Ingrediente";
 import { ProductoIngrediente } from "./entity/ProductoIngrediente";
+import { Rol } from "./entity/Rol";
+import { Usuario } from "./entity/Usuario";
 
 
 export const AppDataSource = new DataSource({
@@ -17,7 +18,7 @@ export const AppDataSource = new DataSource({
     database: "bar_app",
     synchronize: false,
     logging: false,
-    entities: [Ubicacion, Producto, Pedido, LineaPedido, Ingrediente, ProductoIngrediente],
+    entities: [Producto, Pedido, LineaPedido, Ingrediente, ProductoIngrediente, Rol, Usuario],
     migrations: [],
     subscribers: [],
 })

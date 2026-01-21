@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { PedidoService } from 'src/app/services/pedido.service';
 import { Pedido } from 'src/app/interfaces/pedido';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-cocinero',
@@ -20,7 +19,7 @@ export class CocineroComponent {
   }
 
     cargarPedidos() {
-        this.pedidoService.getPedidosActivosAgrupados().subscribe({
+        this.pedidoService.getPedidosActivos().subscribe({
             next: (data) => {
                 this.pedidos = data;
             },

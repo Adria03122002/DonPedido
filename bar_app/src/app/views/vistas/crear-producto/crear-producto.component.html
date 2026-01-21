@@ -28,33 +28,33 @@
     <div class="ingrediente-selector">
       <h3>Seleccionar ingredientes:</h3>
       <div *ngFor="let ingrediente of ingredientes">
+        <!-- Comprobación segura de tiposExcluidos -->
         <ng-container *ngIf="!tiposExcluidos.includes(ingrediente.tipo)">
           <label>
             <input
               type="checkbox"
-                [checked]="ingredienteSeleccionado(ingrediente.id)"
-                (change)="toggleIngrediente(ingrediente.id)"
-              />
-
+              [checked]="ingredienteSeleccionado(ingrediente.id)"
+              (change)="toggleIngrediente(ingrediente.id)"
+            />
             {{ ingrediente.nombre }}
           </label>
 
+          <!-- Usamos ! para asegurar que id no es undefined dentro del objeto cantidades -->
           <input
             type="number"
             *ngIf="ingredienteSeleccionado(ingrediente.id)"
-            placeholder="Cantidad necesaria"
-            [(ngModel)]="cantidades[ingrediente.id]"
+            placeholder="Cantidad"
+            [(ngModel)]="cantidades[ingrediente.id!]"
             [ngModelOptions]="{ standalone: true }"
           />
 
           <span *ngIf="ingredienteSeleccionado(ingrediente.id)" class="unidad-consumo">
-              {{ ingrediente.unidad }}
+            {{ ingrediente.unidad }}
           </span>
         </ng-container>
       </div>
-
     </div>
 
-    <button type="submit" class="btn-crear-producto">Crear</button>
+    <button type="submit" class="btn-crear-producto">Guardar Producto</button>
   </form>
 </div>

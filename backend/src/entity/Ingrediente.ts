@@ -9,7 +9,7 @@ export class Ingrediente {
   nombre: string;
 
   @Column({ type: 'decimal', default: 0 })
-  stock: number;
+  cantidad: number;
 
   @Column({ default: 'unidad' }) // kg, g, ml, litros...
   unidad: string;

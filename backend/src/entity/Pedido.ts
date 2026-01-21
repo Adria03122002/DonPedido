@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, OneToMany } from 'typeorm';
-import { Ubicacion } from './Ubicacion';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { LineaPedido } from './LineaPedido';
 
 @Entity()
@@ -7,8 +6,8 @@ export class Pedido {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Ubicacion, { nullable: true })
-  ubicacion: Ubicacion;
+  @Column({ type: 'varchar', nullable: true })
+  ubicacion: string;
 
   @Column()
   estado: string; // 'en preparación', 'servido', etc.
@@ -16,13 +15,13 @@ export class Pedido {
   @CreateDateColumn()
   fecha: Date;
 
-  @Column({default: false})
+  @Column({ default: false })
   pagado: boolean;
 
   @Column({ nullable: true })
   formaPago: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 }) 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   total: number;
 
   @OneToMany(() => LineaPedido, linea => linea.pedido, {

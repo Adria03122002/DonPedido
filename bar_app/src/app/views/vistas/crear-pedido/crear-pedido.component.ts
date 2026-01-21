@@ -21,8 +21,8 @@ export class CrearPedidoComponent implements OnInit {
     productosMenu: Producto[] = [];
     lineasPedido: LineaActual[] = []; 
     ubicacion: string = '';
-    mesasDisponibles: number[] = Array.from({length: 12}, (_, i) => i + 1);
-    nombreCliente: any;
+    mesasDisponibles: number[] = Array.from({ length: 12 }, (_, i) => i + 1);
+    nombreCliente: string = '';
 
     constructor(
         private productoService: ProductoService,
@@ -36,6 +36,9 @@ export class CrearPedidoComponent implements OnInit {
         });
     }
 
+    /**
+     * Añade un producto a la lista temporal de la comanda actual
+     */
     agregarProducto(producto: Producto): void {
         const lineaExistente = this.lineasPedido.find(l => l.producto.id === producto.id);
 
@@ -55,110 +58,108 @@ export class CrearPedidoComponent implements OnInit {
     }
 
     calcularTotal(): number {
-        return this.lineasPedido.reduce((total, linea) => total + (linea.cantidad * linea.producto.precio), 0);
+        return this.lineasPedido.reduce(
+            (total, linea) => total + (linea.cantidad * linea.producto.precio),
+            0
+        );
     }
     
-
+    /**
+     * Proceso principal de envío
+     */
     enviarPedido(): void {
         if (this.lineasPedido.length === 0 || !this.ubicacion) {
-            alert('Debes añadir productos y seleccionar una ubicación.');
+            alert('Debes añadir productos y seleccionar una ubicación (Mesa o Recoger).');
             return;
         }
-        if (this.ubicacion === 'Recoger' && !this.nombreCliente.trim()) {
+
+        if (this.ubicacion === 'Recoger' && (!this.nombreCliente || !this.nombreCliente.trim())) {
             alert('Debes ingresar el nombre del cliente para pedidos de recogida.');
             return;
         }
 
         const esMesa = this.ubicacion.includes('Mesa');
-        const tipoUbicacion = esMesa ? 'mesa' : 'recoger';
-        const numeroMesa = esMesa ? parseInt(this.ubicacion.split(' ')[1]) : null;
+        
+        if (esMesa) {
+            const numeroMesa = parseInt(this.ubicacion.split(' ')[1], 10);
 
-        if (!esMesa) {
-            this.ejecutarCreacion(numeroMesa, tipoUbicacion);
-            return; 
-        }
-
-        this.pedidoService.getPedidoActivoPorMesa(numeroMesa!).subscribe({
-            next: (pedidoActivo) => {
-                this.ejecutarActualizacion(pedidoActivo, numeroMesa, tipoUbicacion);
-            },
-            error: (err) => {
-                if (err.status === 404) {
-                    this.ejecutarCreacion(numeroMesa, tipoUbicacion);
-                } else {
-                    console.error('Error al verificar pedido activo:', err);
-                    alert(`Error al verificar el estado de la mesa. Detalle: ${err.error?.details || 'Servidor no respondió'}`);
+            this.pedidoService.getPedidoActivoPorMesa(numeroMesa).subscribe({
+                next: (pedidoActivo) => {
+                    if (pedidoActivo) {
+                        this.ejecutarActualizacion(pedidoActivo);
+                    } else {
+                        this.ejecutarCreacion();
+                    }
+                },
+                error: (err) => {
+                    if (err.status === 404) {
+                        this.ejecutarCreacion();
+                    } else {
+                        alert('Error al conectar con el servidor.');
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            this.ejecutarCreacion();
+        }
     }
 
-    ejecutarCreacion(numeroMesa: number | null, tipoUbicacion: string): void {
-        const nuevoPayload = this.construirPayload(numeroMesa, tipoUbicacion, this.lineasPedido);
+    /**
+     * Crea un pedido totalmente nuevo (Mesa vacía o Recogida)
+     */
+    ejecutarCreacion(): void {
+        const nuevoPayload = this.construirPayload(this.lineasPedido);
         
         this.pedidoService.crearPedido(nuevoPayload).subscribe({
             next: (response) => {
-                alert(`Nuevo pedido ${response.id || 'creado'} y asignado.`);
+                alert(`Pedido #${response.id} enviado a cocina.`);
                 this.resetForm();
                 this.router.navigate(['/barra/pedidos']);
             },
-            error: (err: any) => { 
-                console.error('Error al crear pedido:', err);
-                alert(`Error al crear el pedido. Detalle: ${err.error?.details || 'Revisa el backend.'}`);
+            error: (err) => { 
+                alert(`Error al crear el pedido: ${err.error?.message || 'Error de red'}`);
             }
         });
     }
 
-    ejecutarActualizacion(pedidoActivo: any, numeroMesa: number | null, tipoUbicacion: string): void {
-        
-        const lineasActuales = pedidoActivo.lineas || []; 
-        const lineasNuevas = this.lineasPedido; 
-        
-        const lineasTotales = this.consolidarLineas([...lineasActuales, ...lineasNuevas]);
-        
-        const payloadActualizado = this.construirPayload(numeroMesa, tipoUbicacion, lineasTotales);
-        
-    }
+    /**
+     * Añade líneas a un pedido que ya existe en esa mesa
+     */
+    ejecutarActualizacion(pedidoExistente: any): void {
+        const lineasNuevasFormateadas = this.lineasPedido.map(l => ({
+            producto: { id: l.producto.id },
+            cantidad: l.cantidad,
+            modificacion: l.modificacion
+        }));
 
-    consolidarLineas(lineas: any[]): any[] {
-        const mapaConsolidado = new Map();
-
-        lineas.forEach(linea => {
-            const key = `${linea.producto.id}-${linea.modificacion}`;
-
-            if (mapaConsolidado.has(key)) {
-                const lineaExistente = mapaConsolidado.get(key);
-                lineaExistente.cantidad += linea.cantidad;
-            } else {
-                mapaConsolidado.set(key, { ...linea });
-            }
-        });
-
-        return Array.from(mapaConsolidado.values());
-    }
-
-    construirPayload(numeroMesa: number | null, tipoUbicacion: string, lineas: any[]): CrearPedidoPayload {
-        const lineasValidas = lineas.filter(linea => 
-            linea.producto && (linea.producto.id || linea.producto.id === 0)
-        );
-        
-        return {
-            ubicacion: { 
-                numero: numeroMesa, 
-                tipo: tipoUbicacion
+        this.pedidoService.updatePedido(pedidoExistente.id, {
+            ...pedidoExistente,
+            lineas: [...pedidoExistente.lineas, ...lineasNuevasFormateadas]
+        }).subscribe({
+            next: () => {
+                alert('Comanda actualizada correctamente.');
+                this.resetForm();
+                this.router.navigate(['/barra/pedidos']);
             },
-            nombreCliente: tipoUbicacion === 'recoger' ? this.nombreCliente.trim() : null, 
-            estado: 'en preparación',
+            error: () => alert('Error al actualizar el pedido existente.')
+        });
+    }
+
+    /**
+     * Transforma los datos del componente al formato JSON que espera el Backend
+     */
+    construirPayload(lineas: LineaActual[]): CrearPedidoPayload {
+        return {
+            ubicacion: this.ubicacion,
+            nombreCliente: this.ubicacion === 'Recoger' ? this.nombreCliente.trim() : 'Mesa',
+            estado: 'pendiente',
             fecha: new Date().toISOString(),
             pagado: false,
-            
-           lineas: lineasValidas.map(linea => {
-                return {
-                    cantidad: linea.cantidad,
-                    producto: { id: linea.producto.id }, 
-                    modificacion: linea.modificacion
-                };
-            })
+            lineas: lineas.map(linea => ({
+                cantidad: linea.cantidad,
+                producto: { id: linea.producto.id },
+                modificacion: linea.modificacion
+            }))
         };
     }
     
