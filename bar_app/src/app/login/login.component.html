@@ -1,9 +1,55 @@
-<div class="login-container">
-  <div class="login-box">
-    <h2>Selecciona tu rol</h2>
+<div class="login-page">
+  <div class="login-card animate-in">
+    
+    <div class="login-header">
+      <div class="logo-container">
+        <span class="logo-icon">🥘</span>
+      </div>
+      <h1>Don <span class="accent">Pedido</span></h1>
+      <p>Introduce tus credenciales para acceder al TPV</p>
+    </div>
 
-    <button (click)="seleccionarRol('camarero')">Camarero</button>
-    <button (click)="seleccionarRol('cocina')">Cocina</button>
-    <button (click)="seleccionarRol('barra')">Barra</button>
+    <form class="login-form" (submit)="onSubmit($event)">
+      <div class="form-group">
+        <label for="email">Correo Electrónico</label>
+        <div class="input-wrapper">
+          <span class="icon">✉️</span>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            [(ngModel)]="loginData.email"
+            placeholder="ejemplo@correo.com" 
+            required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <div class="input-wrapper">
+          <span class="icon">🔒</span>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            [(ngModel)]="loginData.password"
+            placeholder="••••••••" 
+            required>
+        </div>
+      </div>
+
+      <div *ngIf="errorMsg" class="error-banner">
+        ⚠️ {{ errorMsg }}
+      </div>
+
+      <button type="submit" [disabled]="cargando" class="btn-login">
+        <span *ngIf="!cargando">ENTRAR AL SISTEMA</span>
+        <span *ngIf="cargando" class="spinner"></span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>© 2026 Don Pedido POS System</p>
+    </div>
   </div>
 </div>

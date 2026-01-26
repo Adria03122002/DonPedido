@@ -1,0 +1,106 @@
+<div class="tpv-container animate-in">
+  
+  <!-- LADO IZQUIERDO: CATÁLOGO DE PRODUCTOS -->
+  <main class="menu-section">
+    <header class="menu-header">
+      <div class="header-top">
+        <button (click)="volver()" class="btn-back">⬅️</button>
+        <h1>Añadir a <span class="accent">Comanda</span></h1>
+      </div>
+      <p class="subtitle">Selecciona los productos para agregar a la cuenta</p>
+    </header>
+
+    <div class="products-grid custom-scroll">
+      <div *ngFor="let prod of productosMenu" 
+           (click)="agregarProducto(prod)"
+           class="product-card">
+        
+        <!-- Contenedor de Imagen con Fallback a Emoji -->
+        <div class="icon-wrapper">
+          <img *ngIf="prod.imagenUrl" 
+               [src]="prod.imagenUrl" 
+               [alt]="prod.nombre" 
+               class="product-img"
+               onerror="this.src='assets/img/placeholder.png'; this.classList.add('error-img')">
+          <span *ngIf="!prod.imagenUrl" class="fallback-emoji">
+            {{ getEmoji(prod.tipo) }}
+          </span>
+        </div>
+
+        <div class="product-info">
+          <h3 class="name">{{ prod.nombre }}</h3>
+          <span class="price">{{ prod.precio | currency:'EUR' }}</span>
+        </div>
+        
+        <div class="plus-indicator">+</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- LADO DERECHO: TICKET / RECIBO -->
+  <aside class="ticket-section">
+    
+    <header class="ticket-header">
+      <div class="customer-info">
+        <div class="avatar-mesa">📍</div>
+        <div class="details">
+          <span class="badge">Pedido #{{ pedidoId }}</span>
+          <h2>{{ ubicacion }}</h2>
+          <p class="client-name">{{ nombreCliente || 'Cliente General' }}</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="ticket-items custom-scroll">
+      <div *ngIf="lineasPedido.length === 0" class="empty-state">
+        <span class="empty-icon">📝</span>
+        <p>El ticket está vacío</p>
+      </div>
+
+      <div *ngFor="let linea of lineasPedido; let i = index" class="linea-item animate-slide-in">
+        <div class="item-main">
+          <!-- Miniatura en el ticket para identificación rápida -->
+          <div class="item-thumb">
+            <img *ngIf="linea.producto?.imagenUrl" [src]="linea.producto.imagenUrl" class="thumb-img">
+            <span *ngIf="!linea.producto?.imagenUrl">{{ getEmoji(linea.producto?.tipo) }}</span>
+          </div>
+
+          <div class="item-info">
+            <span class="title">{{ linea.producto?.nombre }}</span>
+            <span class="subtotal">{{ (linea.cantidad * (linea.producto?.precio || 0)) | currency:'EUR' }}</span>
+          </div>
+          
+          <div class="qty-controls">
+            <button (click)="cambiarCantidad(i, -1)" class="btn-qty minus">－</button>
+            <span class="qty-val">{{ linea.cantidad }}</span>
+            <button (click)="cambiarCantidad(i, 1)" class="btn-qty plus">＋</button>
+          </div>
+        </div>
+        
+        <div class="item-footer">
+          <div class="note-wrapper">
+            <span class="note-icon">📝</span>
+            <input [(ngModel)]="linea.modificacion" 
+                   placeholder="Instrucciones especiales..." 
+                   class="item-note">
+          </div>
+          <button (click)="eliminarLinea(i)" class="btn-remove" title="Eliminar">✖</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="ticket-footer">
+      <div class="total-row">
+        <span class="total-label">Total Pedido</span>
+        <span class="total-amount">{{ calcularTotal() | currency:'EUR' }}</span>
+      </div>
+
+      <button (click)="guardar()" 
+              [disabled]="lineasPedido.length === 0"
+              class="btn-submit">
+        {{ esNuevo ? '🚀 CONFIRMAR PEDIDO' : '✅ ACTUALIZAR TICKET' }}
+      </button>
+    </footer>
+  </aside>
+
+</div>

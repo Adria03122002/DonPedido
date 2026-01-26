@@ -1,1 +1,70 @@
-<p>camarero works!</p>
+<div class="kds-dashboard">
+  
+  <!-- BARRA SUPERIOR PROFESIONAL -->
+  <header class="kds-navbar">
+    <div class="brand">
+      <div class="logo-box">P</div>
+      <div class="brand-info">
+        <h1>SALA PRINCIPAL</h1>
+        <p>GESTIÓN DE MESAS EN TIEMPO REAL</p>
+      </div>
+    </div>
+
+    <div class="stats-panel">
+      <div class="stat-item">
+        <span class="label">MESAS LIBRES</span>
+        <span class="value text-success">{{ mesasLibres() }} / 12</span>
+      </div>
+      <div class="stat-item border-l">
+        <span class="label">VENTAS ACTIVAS</span>
+        <span class="value text-indigo">{{ totalPendiente() | currency:'EUR' }}</span>
+      </div>
+      <button (click)="logout()" class="btn-logout">CERRAR SESIÓN</button>
+    </div>
+  </header>
+
+  <!-- MAPA DE MESAS -->
+  <main class="main-content">
+    <div class="mesas-grid">
+      
+      <!-- Iteración de mesas -->
+      <div *ngFor="let mesa of mesas()" 
+           (click)="gestionarMesa(mesa)"
+           class="mesa-card" 
+           [ngClass]="getClaseEstado(mesa)">
+        
+        <div class="card-top">
+          <span class="mesa-label">MESA {{ mesa.numero }}</span>
+          <span class="order-id" *ngIf="mesa.pedidoId">#{{ mesa.pedidoId }}</span>
+        </div>
+
+        <div class="card-mid">
+          <!-- Icono dinámico según ocupación -->
+          <span class="mesa-icon">{{ mesa.ocupada ? '🍽️' : '🪑' }}</span>
+          
+          <div class="mesa-details" *ngIf="mesa.ocupada">
+            <p class="current-total">{{ mesa.total | currency:'EUR' }}</p>
+            <p class="current-status">{{ mesa.estado.toUpperCase() }}</p>
+          </div>
+          
+          <div class="mesa-details" *ngIf="!mesa.ocupada">
+            <p class="current-status">DISPONIBLE</p>
+          </div>
+        </div>
+
+        <div class="card-bottom">
+          <button class="action-trigger">
+            {{ mesa.ocupada ? 'GESTIONAR CUENTA' : 'ABRIR COMANDA' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCESO RÁPIDO A RECOGIDAS -->
+    <div class="footer-actions">
+      <button (click)="irARecoger()" class="btn-delivery">
+        📦 NUEVO PEDIDO PARA RECOGER / PARA LLEVAR
+      </button>
+    </div>
+  </main>
+</div>

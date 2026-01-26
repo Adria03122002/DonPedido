@@ -1,0 +1,147 @@
+:host {
+  --bg: #f8fafc;
+  --navy: #1e293b;
+  --indigo: #6366f1;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  display: block;
+  height: 100vh;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.kds-dashboard {
+  background-color: var(--bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- NAVBAR --- */
+.kds-navbar {
+  background: var(--navy);
+  padding: 0.75rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.brand { display: flex; align-items: center; gap: 1rem; }
+.logo-box {
+  background: var(--indigo);
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.4rem;
+}
+.brand-info h1 { margin: 0; font-size: 1.1rem; font-weight: 900; letter-spacing: -0.5px; }
+.brand-info p { margin: 0; font-size: 0.55rem; color: #94a3b8; font-weight: 800; letter-spacing: 1px; }
+
+.stats-panel { display: flex; align-items: center; gap: 1.5rem; }
+.stat-item { padding-left: 1.5rem; }
+.border-l { border-left: 1px solid rgba(255,255,255,0.1); }
+.stat-item .label { display: block; font-size: 0.55rem; font-weight: 800; color: #94a3b8; margin-bottom: 2px; }
+.stat-item .value { font-size: 1.1rem; font-weight: 900; }
+.text-success { color: var(--success); }
+.text-indigo { color: #a5b4fc; }
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+/* --- GRID DE MESAS --- */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.mesas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.mesa-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mesa-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1);
+}
+
+/* Estados Visuales */
+.mesa-libre { border-color: #f1f5f9; }
+.mesa-libre:hover { border-color: var(--indigo); }
+
+.mesa-pendiente { background: #fffcf0; border-color: #fef3c7; }
+.mesa-pendiente:hover { border-color: var(--warning); }
+
+.mesa-servida { background: #f0fdf4; border-color: #dcfce7; }
+.mesa-servida:hover { border-color: var(--success); }
+
+.card-top { display: flex; justify-content: space-between; align-items: center; }
+.mesa-label { font-weight: 900; font-size: 1rem; color: #475569; }
+.order-id { font-size: 0.6rem; font-weight: 800; color: #94a3b8; background: #f8fafc; padding: 2px 6px; border-radius: 4px; }
+
+.card-mid { text-align: center; padding: 0.5rem 0; }
+.mesa-icon { font-size: 2.2rem; display: block; margin-bottom: 0.5rem; }
+.mesa-details .current-total { font-size: 1.4rem; font-weight: 900; color: var(--text-main); margin: 0; }
+.mesa-details .current-status { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); margin-top: 2px; }
+
+.card-bottom { margin-top: auto; }
+.action-trigger {
+  width: 100%;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.7rem;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: all 0.2s;
+}
+.mesa-card:hover .action-trigger { background: var(--indigo); color: white; }
+
+.footer-actions { margin-top: 3rem; }
+.btn-delivery {
+  width: 100%;
+  background: white;
+  border: 2px dashed #e2e8f0;
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  font-weight: 900;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-delivery:hover { border-color: var(--indigo); color: var(--indigo); background: #f5f7ff; }

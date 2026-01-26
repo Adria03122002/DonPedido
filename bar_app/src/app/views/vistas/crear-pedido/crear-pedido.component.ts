@@ -1,171 +1,106 @@
-import { Component, OnInit } from '@angular/core';
-import { CrearPedidoPayload } from 'src/app/interfaces/pedido';
-import { Producto } from 'src/app/interfaces/producto';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { PedidoService } from 'src/app/services/pedido.service';
 import { ProductoService } from 'src/app/services/producto.service';
-import { Router } from '@angular/router';
-
-interface LineaActual {
-    producto: Producto;
-    cantidad: number;
-    modificacion: string;
-}
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
-    selector: 'app-crear-pedido',
-    templateUrl: './crear-pedido.component.html',
-    styleUrls: ['./crear-pedido.component.css']
+  selector: 'app-crear-pedido',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './crear-pedido.component.html',
+  styleUrls: ['./crear-pedido.component.css']
 })
 export class CrearPedidoComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private productoService = inject(ProductoService);
+  private pedidoService = inject(PedidoService);
+  private authService = inject(AuthService); 
+
+  ubicacion = signal<string>('');
+  nombreCliente = signal<string>('');
+  productos = signal<any[]>([]);
+  categorias = ['Hamburguesas', 'Bebidas', 'Entrantes', 'Postres'];
+  categoriaActiva = signal('Hamburguesas');
+  lineasPedido = signal<any[]>([]);
+
+  ngOnInit() {
+    this.obtenerParametrosRuta();
+    this.cargarProductos();
+  }
+
+  private obtenerParametrosRuta() {
+    this.route.queryParams.subscribe(params => {
+      this.ubicacion.set(params['mesa'] || 'Barra');
+      this.nombreCliente.set(params['cliente'] || '');
+    });
+  }
+
+  private cargarProductos() {
+    this.productoService.getAll().subscribe(res => {
+      this.productos.set(res.filter(p => p.disponible));
+    });
+  }
+
+  agregarProducto(prod: any) {
+    const actual = this.lineasPedido();
+    const existe = actual.find(l => l.productoId === prod.id);
     
-    productosMenu: Producto[] = [];
-    lineasPedido: LineaActual[] = []; 
-    ubicacion: string = '';
-    mesasDisponibles: number[] = Array.from({ length: 12 }, (_, i) => i + 1);
-    nombreCliente: string = '';
-
-    constructor(
-        private productoService: ProductoService,
-        private pedidoService: PedidoService,
-        private router: Router
-    ) { }
-
-    ngOnInit(): void {
-        this.productoService.getAll().subscribe(productos => {
-            this.productosMenu = productos.filter(p => p.disponible);
-        });
+    if (existe) {
+      existe.cantidad++;
+      this.lineasPedido.set([...actual]);
+    } else {
+      this.lineasPedido.update(prev => [...prev, {
+        productoId: prod.id, 
+        nombre: prod.nombre, 
+        precio: prod.precio, 
+        cantidad: 1
+      }]);
     }
+  }
 
-    /**
-     * Añade un producto a la lista temporal de la comanda actual
-     */
-    agregarProducto(producto: Producto): void {
-        const lineaExistente = this.lineasPedido.find(l => l.producto.id === producto.id);
+  get totalComanda() {
+    return this.lineasPedido().reduce((acc, l) => acc + (l.precio * l.cantidad), 0);
+  }
 
-        if (lineaExistente) {
-            lineaExistente.cantidad++;
-        } else {
-            this.lineasPedido.push({
-                producto: producto,
-                cantidad: 1,
-                modificacion: ''
-            });
-        }
-    }
-
-    eliminarLinea(index: number): void {
-        this.lineasPedido.splice(index, 1);
-    }
-
-    calcularTotal(): number {
-        return this.lineasPedido.reduce(
-            (total, linea) => total + (linea.cantidad * linea.producto.precio),
-            0
-        );
-    }
+  private redirigirSegunRol() {
+    const rol = this.authService.getUserRole();
+    console.log("Rol detectado para navegación:", rol); 
     
-    /**
-     * Proceso principal de envío
-     */
-    enviarPedido(): void {
-        if (this.lineasPedido.length === 0 || !this.ubicacion) {
-            alert('Debes añadir productos y seleccionar una ubicación (Mesa o Recoger).');
-            return;
-        }
+    if (rol === 'Camarero') {
+      this.router.navigate(['/camarero']);
+    } else {
+      this.router.navigate(['/barra/pedidos']);
+    }
+  }
 
-        if (this.ubicacion === 'Recoger' && (!this.nombreCliente || !this.nombreCliente.trim())) {
-            alert('Debes ingresar el nombre del cliente para pedidos de recogida.');
-            return;
-        }
-
-        const esMesa = this.ubicacion.includes('Mesa');
-        
-        if (esMesa) {
-            const numeroMesa = parseInt(this.ubicacion.split(' ')[1], 10);
-
-            this.pedidoService.getPedidoActivoPorMesa(numeroMesa).subscribe({
-                next: (pedidoActivo) => {
-                    if (pedidoActivo) {
-                        this.ejecutarActualizacion(pedidoActivo);
-                    } else {
-                        this.ejecutarCreacion();
-                    }
-                },
-                error: (err) => {
-                    if (err.status === 404) {
-                        this.ejecutarCreacion();
-                    } else {
-                        alert('Error al conectar con el servidor.');
-                    }
-                }
-            });
-        } else {
-            this.ejecutarCreacion();
-        }
+  enviarPedido() {
+    if (this.lineasPedido().length === 0) {
+      console.warn("No se puede enviar un pedido sin productos.");
+      return; 
     }
 
-    /**
-     * Crea un pedido totalmente nuevo (Mesa vacía o Recogida)
-     */
-    ejecutarCreacion(): void {
-        const nuevoPayload = this.construirPayload(this.lineasPedido);
-        
-        this.pedidoService.crearPedido(nuevoPayload).subscribe({
-            next: (response) => {
-                alert(`Pedido #${response.id} enviado a cocina.`);
-                this.resetForm();
-                this.router.navigate(['/barra/pedidos']);
-            },
-            error: (err) => { 
-                alert(`Error al crear el pedido: ${err.error?.message || 'Error de red'}`);
-            }
-        });
-    }
+    const payload = {
+      ubicacion: this.ubicacion(),
+      nombreCliente: this.nombreCliente() || 'Cliente General',
+      estado: 'pendiente',
+      fecha: new Date().toISOString(),
+      pagado: false,
+      lineas: this.lineasPedido().map(l => ({
+        productoId: l.productoId,
+        cantidad: l.cantidad
+      }))
+    };
 
-    /**
-     * Añade líneas a un pedido que ya existe en esa mesa
-     */
-    ejecutarActualizacion(pedidoExistente: any): void {
-        const lineasNuevasFormateadas = this.lineasPedido.map(l => ({
-            producto: { id: l.producto.id },
-            cantidad: l.cantidad,
-            modificacion: l.modificacion
-        }));
-
-        this.pedidoService.updatePedido(pedidoExistente.id, {
-            ...pedidoExistente,
-            lineas: [...pedidoExistente.lineas, ...lineasNuevasFormateadas]
-        }).subscribe({
-            next: () => {
-                alert('Comanda actualizada correctamente.');
-                this.resetForm();
-                this.router.navigate(['/barra/pedidos']);
-            },
-            error: () => alert('Error al actualizar el pedido existente.')
-        });
-    }
-
-    /**
-     * Transforma los datos del componente al formato JSON que espera el Backend
-     */
-    construirPayload(lineas: LineaActual[]): CrearPedidoPayload {
-        return {
-            ubicacion: this.ubicacion,
-            nombreCliente: this.ubicacion === 'Recoger' ? this.nombreCliente.trim() : 'Mesa',
-            estado: 'pendiente',
-            fecha: new Date().toISOString(),
-            pagado: false,
-            lineas: lineas.map(linea => ({
-                cantidad: linea.cantidad,
-                producto: { id: linea.producto.id },
-                modificacion: linea.modificacion
-            }))
-        };
-    }
-    
-    resetForm(): void {
-        this.lineasPedido = [];
-        this.ubicacion = '';
-        this.nombreCliente = '';
-    }
+    this.pedidoService.crearPedido(payload as any).subscribe({
+      next: () => {
+        this.redirigirSegunRol();
+      },
+      error: (err) => {
+        console.error("Error al crear el pedido:", err);
+      }
+    });
+  }
 }

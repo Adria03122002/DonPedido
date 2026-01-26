@@ -1,15 +1,18 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { Pedido } from "../entity/Pedido";
-import { Repository } from "typeorm";
 import { LineaPedido } from "../entity/LineaPedido"; 
 import { Producto } from "../entity/Producto";
+import { In, Not, Repository } from "typeorm";
 
 export class PedidoController {
     private pedidoRepo: Repository<Pedido> = AppDataSource.getRepository(Pedido);
     private lineaRepo: Repository<LineaPedido> = AppDataSource.getRepository(LineaPedido);
     private productoRepo: Repository<Producto> = AppDataSource.getRepository(Producto);
 
+    /**
+     * Limpia los datos para que el Front no reciba strings donde espera números.
+     */
     private serializar(pedido: Pedido) {
         return {
             ...pedido,
@@ -25,174 +28,141 @@ export class PedidoController {
         };
     }
 
-    // Obtener todos los pedidos con sus líneas
-    async all(req: Request, res: Response) { 
-        return this.pedidoRepo.find({ 
-            relations: ["lineas", "lineas.producto"],
-            order: { fecha: "DESC" }
-        }); 
-    }
-
-    // Obtener solo los que no están pagados
+    /**
+     * OBTENER PEDIDOS PARA COCINA (FILTRADO)
+     * Ahora excluye los pedidos con estado 'servido' o 'finalizado'
+     */
     async getPedidosActivos(req: Request, res: Response) {
         try {
             const pedidos = await this.pedidoRepo.find({
-                where: { pagado: false },
+                where: { 
+                    pagado: false,
+                    // Solo traemos pedidos que NO estén servidos ni finalizados
+                    estado: Not(In(["servido", "finalizado"]))
+                },
                 relations: ["lineas", "lineas.producto"],
-                order: { fecha: "ASC" }
+                order: { fecha: "ASC" } // Los más antiguos primero (prioridad)
             });
-            
-            // Devolvemos la lista (aunque sea []) con un 200 OK
-            return res.status(200).json(pedidos.map(p => this.serializar(p)));
+            return pedidos.map(p => this.serializar(p));
         } catch (error) {
-            return res.status(500).json({ message: "Error al obtener la lista de pedidos" });
-        }
-    }
-    
-    /**
-     * CREAR PEDIDO (POST /bar_app/pedidos)
-     */
-    async save(req: Request, res: Response) {
-        const { ubicacion, nombreCliente, lineas } = req.body;
-        try {
-            const nuevoPedido = new Pedido();
-            nuevoPedido.ubicacion = String(ubicacion || nombreCliente || "Barra");
-            if ('nombreCliente' in nuevoPedido) {
-                (nuevoPedido as any).nombreCliente = String(nombreCliente || "");
-            }
-
-            nuevoPedido.estado = "pendiente";
-            nuevoPedido.pagado = false;
-            nuevoPedido.total = 0;
-
-            const pedidoGuardado = await this.pedidoRepo.save(nuevoPedido);
-            let totalAcumulado = 0;
-
-            if (lineas && Array.isArray(lineas)) {
-                for (const item of lineas) {
-                    const idProd = item.productoId || (item.producto && item.producto.id);
-                    const producto = await this.productoRepo.findOneBy({ id: Number(idProd) });
-                    
-                    if (producto) {
-                        const cantidad = Number(item.cantidad) || 1;
-                        totalAcumulado += Number(producto.precio) * cantidad;
-
-                        const nuevaLinea = new LineaPedido();
-                        nuevaLinea.cantidad = cantidad;
-                        nuevaLinea.modificacion = String(item.modificacion || "");
-                        nuevaLinea.pedido = pedidoGuardado;
-                        nuevaLinea.producto = producto;
-                        await this.lineaRepo.save(nuevaLinea);
-                    }
-                }
-                pedidoGuardado.total = totalAcumulado;
-                await this.pedidoRepo.save(pedidoGuardado);
-            }
-
-            return await this.pedidoRepo.findOne({
-                where: { id: pedidoGuardado.id },
-                relations: ["lineas", "lineas.producto"]
-            });
-        } catch (error: any) {
-            console.error("Error al crear pedido:", error);
-            res.status(500);
-            return { message: "Error al procesar pedido", details: error.message };
+            return res.status(500).json({ error: "Error al cargar pedidos de cocina" });
         }
     }
 
+    // action: "one"
+    async one(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        
+        if (isNaN(id)) {
+            res.status(400);
+            return { error: "ID de pedido inválido", recibido: req.params.id };
+        }
+
+        const pedido = await this.pedidoRepo.findOne({
+            where: { id },
+            relations: ["lineas", "lineas.producto"]
+        });
+
+        if (!pedido) {
+            res.status(404);
+            return { message: "Pedido no encontrado" };
+        }
+        return this.serializar(pedido);
+    }
+
     /**
-     * ACTUALIZAR PEDIDO (PUT /bar_app/pedidos/:id)
+     * action: "updatePedido"
+     * ESTA ES LA FUNCIÓN QUE ARREGLA EL TICKET
      */
-    async updatePedido(req: Request, res: Response) {
-        const { id } = req.params;
-        const { lineas, estado } = req.body;
+        async updatePedido(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        const { ubicacion, lineas, estado } = req.body;
+
+        console.log(`\n--- [DEBUG] 1: INICIO UPDATE PEDIDO ${id} ---`);
+
+        if (isNaN(id)) {
+            console.error("❌ [DEBUG] ERROR: ID es NaN");
+            res.status(400);
+            return { error: "ID no válido" };
+        }
 
         try {
+            // 1. Cargar el pedido con sus líneas para tenerlo en memoria
             const pedido = await this.pedidoRepo.findOne({
-                where: { id: Number(id) },
+                where: { id },
                 relations: ["lineas"]
             });
 
             if (!pedido) {
+                console.error("❌ [DEBUG] Pedido no encontrado");
                 res.status(404);
-                return { message: "Pedido no encontrado" };
+                return { error: "No existe" };
             }
 
-            // Actualizamos estado si viene en el body
-            if (estado) pedido.estado = estado;
+            // 2. BORRADO "FUERZA BRUTA" (Query Builder)
+            // Esto envía un "DELETE FROM lineapedido WHERE pedidoId = X" directo a MySQL
+            console.log(`🧹 [DEBUG] 2: Ejecutando borrado SQL de líneas antiguas...`);
+            await AppDataSource
+                .createQueryBuilder()
+                .delete()
+                .from(LineaPedido)
+                .where("pedidoId = :id", { id: pedido.id })
+                .execute();
 
-            let totalExtra = 0;
+            // Vaciamos la relación en el objeto de memoria para que el save posterior no haga cosas raras
+            pedido.lineas = [];
+            console.log("✅ [DEBUG] 3: Memoria del objeto limpiada.");
+
+            // 3. INSERTAR NUEVAS LÍNEAS
+            let nuevoTotal = 0;
             if (lineas && Array.isArray(lineas)) {
+                console.log(`🏗️ [DEBUG] 4: Procesando ${lineas.length} líneas nuevas...`);
                 for (const item of lineas) {
-                    const idProd = item.productoId || (item.producto && item.producto.id);
-                    const producto = await this.productoRepo.findOneBy({ id: Number(idProd) });
-                    
-                    if (producto) {
-                        const cantidad = Number(item.cantidad) || 1;
-                        totalExtra += Number(producto.precio) * cantidad;
+                    const idProd = Number(item.productoId || item.producto?.id);
+                    const producto = await this.productoRepo.findOneBy({ id: idProd });
 
-                        const nuevaLinea = new LineaPedido();
-                        nuevaLinea.cantidad = cantidad;
-                        nuevaLinea.modificacion = String(item.modificacion || "");
-                        nuevaLinea.pedido = pedido; 
-                        nuevaLinea.producto = producto;
-                        await this.lineaRepo.save(nuevaLinea);
+                    if (producto) {
+                        const cant = Number(item.cantidad) || 1;
+                        nuevoTotal += Number(producto.precio) * cant;
+
+                        // Creamos la línea pero NO la guardamos aún individualmente
+                        const nuevaLinea = this.lineaRepo.create({
+                            cantidad: cant,
+                            modificacion: item.modificacion || "",
+                            pedido: pedido,
+                            producto: producto
+                        });
+                        // La añadimos al array del pedido
+                        pedido.lineas.push(nuevaLinea);
                     }
                 }
             }
 
-            // Sumamos al total existente
-            pedido.total = Number(pedido.total) + totalExtra;
+            // 4. ACTUALIZAR CABECERA Y GUARDAR TODO EN CASCADA
+            pedido.total = nuevoTotal;
+            pedido.ubicacion = ubicacion || pedido.ubicacion;
+            if (estado) pedido.estado = estado;
+
+            console.log("💾 [DEBUG] 5: Guardando pedido y nuevas líneas en una sola operación...");
             await this.pedidoRepo.save(pedido);
 
-            return await this.pedidoRepo.findOne({
+            // 5. RECARGA FINAL (Garantiza que 'producto' no sea null)
+            const pedidoFinal = await this.pedidoRepo.findOne({
                 where: { id: pedido.id },
                 relations: ["lineas", "lineas.producto"]
             });
 
+            console.log("🚀 [DEBUG] 6: Sincronización terminada.");
+            return this.serializar(pedidoFinal!);
+
         } catch (error: any) {
-            console.error("Error en updatePedido:", error);
+            console.error("🔥 [DEBUG] FALLO CRÍTICO:", error.message);
             res.status(500);
-            return { message: "Error al actualizar", details: error.message };
+            return { error: "Error en el servidor", detalle: error.message };
         }
     }
 
-    async marcarComoPagado(req: Request, res: Response) {
-        const { id } = req.params as any;
-        const { formaPago } = req.body;
-        try {
-            const pedido = await this.pedidoRepo.findOneBy({ id: Number(id) });
-            if (!pedido) {
-                res.status(404);
-                return { message: "Pedido no encontrado" };
-            }
-            pedido.pagado = true;
-            pedido.estado = "finalizado";
-            pedido.formaPago = formaPago || "EFECTIVO";
-            return await this.pedidoRepo.save(pedido);
-        } catch (error) {
-            res.status(500);
-            return { message: "Error al procesar pago" };
-        }
-    }
-
-    async updateEstado(req: Request, res: Response) {
-        const { id } = req.params as any;
-        const { estado } = req.body;
-        try {
-            const pedido = await this.pedidoRepo.findOneBy({ id: Number(id) });
-            if (!pedido) {
-                res.status(404);
-                return { message: "Pedido no encontrado" };
-            }
-            pedido.estado = String(estado);
-            return await this.pedidoRepo.save(pedido);
-        } catch (error) {
-            res.status(500);
-            return { message: "Error al actualizar estado" };
-        }
-    }
-
+    // action: "getPedidoActivoPorMesa"
     async getPedidoActivoPorMesa(req: Request, res: Response) {
         const { ubicacionString } = req.params;
         try {
@@ -206,23 +176,166 @@ export class PedidoController {
 
             if (!pedido) {
                 res.status(404);
-                return { message: "Mesa libre" };
+                return { message: "Libre" };
             }
-            return pedido;
+            return this.serializar(pedido);
         } catch (error) {
             res.status(500);
             return { message: "Error al buscar mesa" };
         }
     }
 
-    async delete(req: Request, res: Response) {
-        const { id } = req.params;
+    async save(req: Request, res: Response) {
+            console.log("\n--- [DEBUG] INICIO SAVE (CREAR NUEVO PEDIDO) ---");
+            const { ubicacion, nombreCliente, lineas, estado } = req.body;
+            
+            console.log("Console.log(1: Datos recibidos en el Body):", JSON.stringify({ ubicacion, nombreCliente, numLineas: lineas?.length }));
+
+            try {
+                // 1. Crear la entidad base
+                const nuevoPedido = new Pedido();
+                // Evitamos usar nombreCliente como columna si da error, lo metemos en ubicacion si es necesario
+                nuevoPedido.ubicacion = String(ubicacion || nombreCliente || "Barra");
+                nuevoPedido.estado = estado || "pendiente";
+                nuevoPedido.pagado = false;
+                nuevoPedido.total = 0;
+
+                console.log("Console.log(2: Intentando guardar cabecera inicial...)");
+                const pedidoGuardado = await this.pedidoRepo.save(nuevoPedido);
+                console.log(`✅ Console.log(3: Pedido creado con ID: ${pedidoGuardado.id})`);
+
+                let totalAcumulado = 0;
+
+                // 2. Procesar líneas
+                if (lineas && Array.isArray(lineas)) {
+                    console.log("Console.log(4: Empezando a procesar líneas de productos...)");
+                    for (const [idx, item] of lineas.entries()) {
+                        const idProd = Number(item.productoId || item.producto?.id);
+                        
+                        if (isNaN(idProd)) {
+                            console.log(`⚠️ Console.log(Línea ${idx} ignorada: ID de producto no es número)`);
+                            continue;
+                        }
+
+                        const producto = await this.productoRepo.findOneBy({ id: idProd });
+                        
+                        if (producto) {
+                            const cantidad = Number(item.cantidad) || 1;
+                            totalAcumulado += Number(producto.precio) * cantidad;
+
+                            const nuevaLinea = this.lineaRepo.create({
+                                cantidad: cantidad,
+                                modificacion: String(item.modificacion || ""),
+                                pedido: pedidoGuardado,
+                                producto: producto
+                            });
+                            await this.lineaRepo.save(nuevaLinea);
+                            console.log(`   ➕ Console.log(Línea ${idx} guardada: ${producto.nombre} x${cantidad})`);
+                        } else {
+                            console.log(`❌ Console.log(Línea ${idx} ERROR: Producto ${idProd} no existe)`);
+                        }
+                    }
+                }
+
+                // 3. Actualizar total final
+                pedidoGuardado.total = totalAcumulado;
+                console.log(`Console.log(5: Guardando total final calculado: ${totalAcumulado})`);
+                await this.pedidoRepo.save(pedidoGuardado);
+
+                console.log("🚀 Console.log(FIN: Pedido creado y sincronizado con éxito)");
+                console.log("---------------------------------------------------\n");
+
+                // Devolvemos el pedido completo con sus relaciones
+                const resultadoFinal = await this.pedidoRepo.findOne({
+                    where: { id: pedidoGuardado.id },
+                    relations: ["lineas", "lineas.producto"]
+                });
+
+                return this.serializar(resultadoFinal!);
+
+            } catch (error: any) {
+                console.error("🔥 Console.log(ERROR CRÍTICO EN SAVE):", error.message);
+                res.status(500);
+                return { error: "Error al crear pedido", detalle: error.message };
+            }
+    }
+
+    // action: "actualizarEstado"
+    async actualizarEstado(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        const { estado } = req.body;
+
         try {
-            await this.pedidoRepo.delete(Number(id));
-            return { message: "Pedido eliminado correctamente" };
+            const pedido = await this.pedidoRepo.findOneBy({ id });
+            if (!pedido) {
+                return res.status(404).json({ message: "Pedido no encontrado" });
+            }
+
+            pedido.estado = estado;
+            await this.pedidoRepo.save(pedido);
+            
+            return res.json({ success: true, estado: pedido.estado });
+        } catch (error: any) {
+            return res.status(500).json({ error: "Error al actualizar estado", detalle: error.message });
+        }
+    }
+
+    async marcarComoPagado(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        const { formaPago } = req.body;
+
+        try {
+            const pedido = await this.pedidoRepo.findOneBy({ id });
+            if (!pedido) {
+                return res.status(404).json({ message: "Pedido no encontrado" });
+            }
+
+            pedido.pagado = true;
+            pedido.estado = 'finalizado';
+            // Aquí podrías guardar la forma de pago si tuvieras la columna:
+            // pedido.formaPago = formaPago; 
+
+            await this.pedidoRepo.save(pedido);
+            return res.json({ success: true, message: "Pedido cobrado" });
+        } catch (error: any) {
+            return res.status(500).json({ error: "Error al procesar pago" });
+        }
+    }
+
+    async delete(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        await this.pedidoRepo.delete(id);
+        return { message: "Borrado" };
+    }
+
+    async all(req: Request, res: Response) {
+        const pedidos = await this.pedidoRepo.find({ relations: ["lineas", "lineas.producto"], order: { fecha: "DESC" } });
+        return pedidos.map(p => this.serializar(p));
+    }
+
+    /**
+     * MAPA DE MESAS (Para la vista de barra)
+     */
+    async getMapaMesas(req: Request, res: Response) {
+        try {
+            const pedidosActivos = await this.pedidoRepo.find({
+                where: { pagado: false }
+            });
+
+            const mapa = Array.from({ length: 12 }, (_, i) => {
+                const num = i + 1;
+                const pedido = pedidosActivos.find(p => p.ubicacion === `Mesa ${num}`);
+                return {
+                    numero: num,
+                    ocupada: !!pedido,
+                    pedidoId: pedido ? pedido.id : null,
+                    estado: pedido ? pedido.estado : 'libre',
+                    total: pedido ? Number(pedido.total) : 0
+                };
+            });
+            return res.json(mapa);
         } catch (error) {
-            res.status(500);
-            return { message: "Error al eliminar pedido" };
+            return res.status(500).json({ message: "Error en mapa de mesas" });
         }
     }
 }

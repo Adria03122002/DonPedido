@@ -1,70 +1,38 @@
-<div class="crear-pedido-container">
-  <h2>Crear Pedido</h2>
-
-  <div class="ubicacion-selector">
-  <label>Asignar a:</label>
-  <select [(ngModel)]="ubicacion" name="ubicacion" required>
-    <option value="">-- Selecciona Ubicación --</option>
-    <option value="Recoger">Recoger</option> 
-    <option *ngFor="let mesa of mesasDisponibles" [value]="'Mesa ' + mesa">
-      Mesa {{ mesa }}
-    </option>
-  </select>
-</div>
-
-<div *ngIf="ubicacion === 'Recoger'" class="recoger-input">
-  <label>Nombre del Cliente:</label>
-  <input type="text" 
-         [(ngModel)]="nombreCliente" 
-         name="nombreCliente" 
-         placeholder="Ej: Juan Pérez" 
-         required />
-</div>
-
-  <div class="content-wrapper">
-
-    <div class="menu-productos">
-      <h3>Menú</h3>
-      <div 
-        *ngFor="let producto of productosMenu" 
-        class="producto-card" 
-        (click)="agregarProducto(producto)"
-      >
-        {{ producto.nombre }} ({{ producto.precio | currency:'EUR' }})
+<div class="pos-layout animate-in">
+  <div class="menu-panel">
+    <div class="menu-header">
+      <div class="tabs">
+        <button *ngFor="let cat of categorias" (click)="categoriaActiva.set(cat)" [class.active]="categoriaActiva() === cat">
+          {{ cat }}
+        </button>
       </div>
     </div>
-
-    <div class="pedido-actual">
-      <h3>Detalle del Pedido</h3>
-
-      <div *ngIf="lineasPedido.length === 0">No hay productos en el pedido.</div>
-
-      <div *ngFor="let linea of lineasPedido; let i = index" class="linea-item">
-
-        <div class="linea-header">
-          <input 
-            type="number" 
-            [(ngModel)]="linea.cantidad" 
-            min="1" 
-            name="cantidad_{{i}}" 
-            required 
-          />
-          <span>x {{ linea.producto.nombre }}</span>
-          <button (click)="eliminarLinea(i)">X</button>
-        </div>
-
-        <input 
-          type="text" 
-          [(ngModel)]="linea.modificacion" 
-          placeholder="Modificaciones (ej: sin hielo)" 
-          name="mod_{{i}}" 
-        />
-      </div>
-
-      <div class="pedido-footer">
-        <h4>Total: {{ calcularTotal() | currency:'EUR' }}</h4> 
-        <button class="btn-enviar" (click)="enviarPedido()">Enviar a Cocina</button>
+    <div class="products-grid">
+      <div *ngFor="let prod of productos()" (click)="agregarProducto(prod)" class="prod-card">
+        <p>{{ prod.nombre }}</p>
+        <span>{{ prod.precio | currency:'EUR' }}</span>
       </div>
     </div>
   </div>
+
+  <aside class="ticket-panel">
+    <div class="ticket-header">
+      <h3>Ticket: {{ ubicacion() }}</h3>
+      <small>{{ nombreCliente() }}</small>
+    </div>
+    <div class="ticket-body">
+      <div *ngFor="let item of lineasPedido()" class="ticket-item">
+        <span>{{ item.cantidad }}x {{ item.nombre }}</span>
+        <span>{{ (item.precio * item.cantidad) | currency:'EUR' }}</span>
+      </div>
+    </div>
+    <div class="ticket-footer">
+      <div class="total-row">
+        <span>TOTAL: {{ totalComanda | currency:'EUR' }}</span>
+      </div>
+      <button [disabled]="lineasPedido().length === 0" (click)="enviarPedido()" class="btn-order">
+        ENVIAR A COCINA 🔥
+      </button>
+    </div>
+  </aside>
 </div>

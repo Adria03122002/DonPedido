@@ -10,7 +10,6 @@ import { TiempoTranscurridoPipe } from 'src/app/pipes/tiempo-transcurrido.pipe';
 import { PedidoComponent } from '../pedido/pedido.component';
 import { CrearProductoComponent } from '../crear-producto/crear-producto.component';
 import { ProductoListaComponent } from '../producto-lista/producto-lista.component';
-import { CrearPedidoComponent } from '../crear-pedido/crear-pedido.component';
 
 @NgModule({
   declarations: [
@@ -20,8 +19,7 @@ import { CrearPedidoComponent } from '../crear-pedido/crear-pedido.component';
     TiempoTranscurridoPipe,
     PedidoComponent,
     CrearProductoComponent,
-    ProductoListaComponent, 
-    CrearPedidoComponent
+    ProductoListaComponent,
   ],
   imports: [
     CommonModule,

@@ -1,0 +1,42 @@
+<div class="step-layout animate-in">
+  <div class="main-panel">
+    <header class="panel-header">
+      <h2>Selecciona <span class="accent">Ubicación</span></h2>
+    </header>
+
+        <div class="mesas-grid">
+        <ng-container *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12]">
+            
+            <!-- El div ahora puede usar 'n' y aplicar el *ngIf sin conflictos -->
+            <div *ngIf="!isOcupada(n)"
+                (click)="seleccionarUbicacion('Mesa ' + n)"
+                class="mesa-card"
+                [class.selected]="ubicacionSeleccionada() === 'Mesa ' + n">
+            <span class="mesa-icon">🪑</span>
+            <span class="mesa-num">MESA {{ n }}</span>
+            <span class="mesa-status">DISPONIBLE</span>
+            </div>
+
+        </ng-container>
+        </div>
+
+    <div class="extra-options">
+      <button (click)="seleccionarUbicacion('Recoger')" 
+              class="btn-option" 
+              [class.active]="ubicacionSeleccionada() === 'Recoger'">
+        <span class="icon">📦</span> PARA LLEVAR / RECOGER
+      </button>
+    </div>
+  </div>
+
+  <aside class="sidebar-confirm">
+    <h3>Resumen Selección</h3>
+    <div class="selection-detail">
+      <p>UBICACIÓN: {{ ubicacionSeleccionada() || '---' }}</p>
+      <input type="text" [(ngModel)]="nombreCliente" placeholder="Nombre cliente..." class="pos-input">
+    </div>
+    <button [disabled]="!ubicacionSeleccionada()" (click)="continuarALaCarta()" class="btn-next">
+      CONTINUAR A LA CARTA ➡️
+    </button>
+  </aside>
+</div>
