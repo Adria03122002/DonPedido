@@ -1,58 +1,75 @@
-<div class="min-h-screen bg-slate-100 font-sans">
-  <!-- Barra Superior -->
-  <div class="bg-slate-900 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-10">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center font-black text-xl">C</div>
-      <h1 class="text-xl font-black tracking-tighter uppercase">Cocina</h1>
+<div class="kds-container">
+  
+  <!-- BARRA SUPERIOR -->
+  <header class="kds-header">
+    <div class="kds-brand">
+      <div class="kds-logo">C</div>
+      <div class="kds-title">
+        <h1>PANEL DE COCINA</h1>
+        <p>SISTEMA DE GESTIÓN DE COMANDAS</p>
+      </div>
     </div>
-    <button (click)="salir()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-bold">SALIR</button>
-  </div>
 
-  <div class="p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      @for (pedido of pedidos(); track pedido.id) {
-        <div class="bg-white rounded-2xl shadow-xl border-t-8 border-orange-500 overflow-hidden flex flex-col">
-          
-          <!-- Header -->
-          <div class="p-4 bg-slate-50 border-b flex justify-between items-start">
-            <h3 class="text-2xl font-black text-slate-800 uppercase">
-              {{ mostrarUbicacion(pedido.ubicacion) }}
-            </h3>
-            <span class="text-[10px] font-bold text-slate-400">#{{ pedido.id }}</span>
-          </div>
+    <div class="kds-controls">
+      <!-- CONTADOR SIMPLE -->
+      <div class="kds-timer" [class.timer-low]="segundosRestantes() < 5">
+        <span class="timer-label">ACTUALIZANDO EN:</span>
+        <span class="timer-value">{{ segundosRestantes() }}s</span>
+      </div>
 
-          <!-- Tiempo -->
-          <div class="px-4 py-2 bg-orange-50 border-b border-orange-100 flex items-center gap-2">
-            <span class="text-xs font-bold text-orange-700">HACE: {{ calcularTiempo(pedido.fecha) }}</span>
-          </div>
+      <div class="kds-badge">
+        {{ pedidos().length }} COMANDAS
+      </div>
 
-          <!-- Productos -->
-          <div class="p-4 flex-grow">
-            <ul class="space-y-3">
-              @for (linea of pedido.lineas; track linea.id) {
-                <li class="flex items-start gap-3">
-                  <span class="flex-shrink-0 w-7 h-7 bg-slate-800 text-white rounded flex items-center justify-center font-bold">{{ linea.cantidad }}</span>
-                  <div class="flex-grow">
-                    <p class="font-bold text-slate-700">{{ linea.producto?.nombre }}</p>
-                    @if (linea.modificacion) {
-                      <span class="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded font-black italic">!! {{ linea.modificacion }}</span>
-                    }
-                  </div>
-                </li>
-              }
-            </ul>
-          </div>
+      <button (click)="salir()" class="btn-back">Salir al login</button>
+    </div>
+  </header>
 
-          <!-- Botón -->
-          <div class="p-4 bg-slate-50 border-t">
-            <button (click)="marcarComoTerminado(pedido.id)" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-lg uppercase text-sm">
-              Terminar
-            </button>
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="kds-main">
+    
+    <div *ngIf="pedidos().length > 0; else noOrders" class="kds-grid">
+      
+      <div *ngFor="let pedido of pedidos(); trackBy: trackById" class="order-card">
+        
+        <div class="card-head" [class.urgent]="pedido.estado === 'pendiente'">
+          <div class="info">
+            <h2>{{ formatearUbicacion(pedido.ubicacion) }}</h2>
+            <span class="time">LLEVA {{ calcularTiempo(pedido.fecha) }}</span>
           </div>
+          <div class="order-num">#{{ pedido.id }}</div>
         </div>
-      } @empty {
-        <div class="col-span-full py-32 text-center opacity-30 italic text-2xl font-black">SIN COMANDAS</div>
-      }
+
+        <div class="card-body">
+          <ul class="items">
+            <li *ngFor="let linea of pedido.lineas">
+              <span class="qty">{{ linea.cantidad }}</span>
+              <div class="prod">
+                <p class="prod-name">{{ linea.producto.nombre }}</p>
+                <div *ngIf="linea.modificacion" class="prod-note">
+                  {{ linea.modificacion }}
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card-foot">
+          <button (click)="marcarComoTerminado(pedido.id)" class="btn-serve">
+            MARCAR COMO SERVIDO
+          </button>
+        </div>
+      </div>
+
     </div>
-  </div>
+
+    <ng-template #noOrders>
+      <div class="kds-empty">
+        <div class="icon">🧊</div>
+        <h2>SIN COMANDAS PENDIENTES</h2>
+        <p>Todo el trabajo está al día.</p>
+      </div>
+    </ng-template>
+
+  </main>
 </div>

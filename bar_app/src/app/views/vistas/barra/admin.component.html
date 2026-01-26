@@ -5,10 +5,19 @@
       <button class="boton-salir" (click)="salir()">Salir</button>
     </div>
     <div class="vista-buttons">
-      <a routerLink="/barra/pedidos" routerLinkActive="active">Pedidos</a>
-      <a routerLink="/barra/stock" routerLinkActive="active">Stock</a>
-      <a routerLink="/barra/crear" routerLinkActive="active">Crear Pedido</a>
-      <a routerLink="/barra/productos" routerLinkActive="active">Listar Productos</a>
+      <!-- Enlace visible para todos -->
+      <a *ngIf="getRol() === 'Administrador'" routerLink="/barra/pedidos" routerLinkActive="active">Pedidos</a>
+      
+      <!-- Solo se muestra si el rol es admin -->
+      <a *ngIf="getRol() === 'Administrador'" routerLink="/barra/stock" routerLinkActive="active">Stock</a>
+
+      <!-- Enlace visible para todos -->
+      <a *ngIf="getRol() === 'Administrador'" routerLink="/barra/crear" routerLinkActive="active">Crear Pedido</a>
+      
+      <!-- Solo se muestra si el rol es admin -->
+      <a *ngIf="getRol() === 'Administrador'" routerLink="/barra/productos" routerLinkActive="active">Listar Productos</a>
+
+      <a *ngIf="getRol() === 'Administrador'" routerLink="/barra/usuarios" routerLinkActive="active">Usuarios</a>
     </div>
   </div>
 

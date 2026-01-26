@@ -1,0 +1,80 @@
+<div class="usuario-gestion-container animate-in">
+  <header class="section-header">
+    <h2>Gestión de <span class="accent">Usuarios</span></h2>
+    <p>Administra los accesos del personal al sistema.</p>
+  </header>
+
+  <div class="gestion-grid">
+    <!-- Formulario de Alta -->
+    <aside class="form-card">
+      <h3>Añadir Nuevo Usuario</h3>
+      <form (ngSubmit)="guardarUsuario()" class="usuario-form">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" placeholder="Ej: Carlos Gómez" required>
+        </div>
+
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" [(ngModel)]="nuevoUsuario.email" name="email" placeholder="email@empresa.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" [(ngModel)]="nuevoUsuario.password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group">
+          <label>Rol en el Sistema</label>
+          <select [(ngModel)]="nuevoUsuario.rol" name="rol">
+            <option value="Administrador">Administrador</option>
+            <option value="Camarero">Camarero</option>
+            <option value="Cocinero">Cocinero</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-guardar">
+          <span>➕</span> Registrar Usuario
+        </button>
+      </form>
+    </aside>
+
+    <!-- Lista de Usuarios -->
+    <main class="tabla-card">
+      <div class="tabla-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of usuarios()">
+              <td>
+                <div class="user-info">
+                  <div class="user-avatar">{{ user.nombre.charAt(0) }}</div>
+                  <strong>{{ user.nombre }}</strong>
+                </div>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span class="badge-rol" [ngClass]="user.rol">
+                  {{ user.rol }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-icon delete" (click)="pedirConfirmacion(user.id)" title="Eliminar">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+</div>

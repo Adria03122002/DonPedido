@@ -19,7 +19,7 @@ export class Pedido {
   pagado: boolean;
 
   @Column({ nullable: true })
-  formaPago: string;
+  nombreCliente!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   total: number;

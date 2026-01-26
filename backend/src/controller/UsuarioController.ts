@@ -9,9 +9,20 @@ export class UsuarioController {
 
     // Obtener todos los usuarios
     async all(req: Request, res: Response) {
-        return this.userRepo.find({
-            relations: ["rol"]
-        });
+        try {
+            const usuarios = await this.userRepo.find({
+                select: {
+                    id: true,
+                    nombre: true,
+                    email: true,
+                },
+                relations: ["rol"]
+            });
+
+            return res.json(usuarios);
+        } catch (error) {
+            return res.status(500).json({ message: "Error al obtener usuarios" });
+        }
     }
 
     // Obtener un usuario por ID

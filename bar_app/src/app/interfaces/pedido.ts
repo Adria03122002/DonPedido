@@ -8,12 +8,11 @@ export interface Pedido {
   total: number;
   lineas?: LineaPedido[];
   pagado: boolean;
-  nombreCliente?: string | null;
+  nombreCliente?: string; 
 }
 
 export interface CrearPedidoPayload {
   ubicacion: string;
-  nombreCliente: string | null;
   estado: string;
   fecha: string;
   pagado: boolean;
@@ -22,4 +21,5 @@ export interface CrearPedidoPayload {
     producto: { id: number };
     modificacion: string;
   }[];
+  nombreCliente?: string; 
 }

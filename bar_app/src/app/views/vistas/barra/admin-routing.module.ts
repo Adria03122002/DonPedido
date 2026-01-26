@@ -7,6 +7,9 @@ import { CrearIngredienteComponent } from '../crear-ingrediente/crear-ingredient
 import { CrearProductoComponent } from '../crear-producto/crear-producto.component';
 import { CrearPedidoComponent } from '../crear-pedido/crear-pedido.component';
 import { ProductoListaComponent } from '../producto-lista/producto-lista.component';
+import { ModificarPedidoComponent } from '../pedido/modificar-pedido/modificar-pedido.component';
+import { MapaMesasComponent } from './mapa-mesas/mapa-mesas.component';
+import { UsuarioGestionComponent } from './usuario-gestion/usuario-gestion.component';
 
 const routes: Routes = [
   {
@@ -21,6 +24,9 @@ const routes: Routes = [
       { path: 'productos', component: ProductoListaComponent },
       { path: 'productos/editar/:id', component: CrearProductoComponent },
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
+      { path : 'pedidos/modificar/:id', component: ModificarPedidoComponent},
+      { path: 'mapa-mesas', component: MapaMesasComponent},
+      { path : 'usuarios', component: UsuarioGestionComponent },
     ]
   }
 ];
