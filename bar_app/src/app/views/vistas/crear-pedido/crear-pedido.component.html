@@ -1,38 +1,159 @@
 <div class="pos-layout animate-in">
-  <div class="menu-panel">
-    <div class="menu-header">
-      <div class="tabs">
-        <button *ngFor="let cat of categorias" (click)="categoriaActiva.set(cat)" [class.active]="categoriaActiva() === cat">
-          {{ cat }}
-        </button>
-      </div>
+
+<!-- PANEL DE SELECCIÓN (IZQUIERDA) -->
+
+<div class="menu-panel">
+<div class="menu-header">
+<div class="header-info">
+<button (click)="cancelar()" class="btn-back">⬅️ Volver</button>
+<span class="location-badge">📍 {{ ubicacion() }}</span>
+</div>
+
+  <!-- SELECTOR DE CATEGORÍAS -->
+  <div class="tabs">
+    <button 
+      *ngFor="let cat of categorias" 
+      (click)="setCategoria(cat)" 
+      [class.active]="categoriaActiva() === cat">
+      {{ cat }}
+    </button>
+  </div>
+</div>
+
+<!-- GRID DE PRODUCTOS FILTRADOS -->
+<div class="products-grid">
+  <div *ngFor="let prod of productosFiltrados()" 
+       (click)="agregarProducto(prod)" 
+       class="prod-card animate-item">
+    
+    <!-- BOTÓN DE INFORMACIÓN (Ficha Técnica) -->
+    <button class="btn-info-circle" (click)="verInfo($event, prod)" title="Ver ingredientes">
+      i
+    </button>
+
+    <!-- LÓGICA DE IMAGEN DINÁMICA -->
+    <div class="prod-media">
+      <img *ngIf="prod.imagenUrl; else fallbackIcon" 
+           [src]="prod.imagenUrl" 
+           [alt]="prod.nombre" 
+           class="prod-img-render">
+      <ng-template #fallbackIcon>
+        <div class="prod-icon">🍽️</div>
+      </ng-template>
     </div>
-    <div class="products-grid">
-      <div *ngFor="let prod of productos()" (click)="agregarProducto(prod)" class="prod-card">
-        <p>{{ prod.nombre }}</p>
-        <span>{{ prod.precio | currency:'EUR' }}</span>
+
+    <div class="prod-info">
+        <p class="prod-name">{{ prod.nombre }}</p>
+        <span class="prod-price">{{ prod.precio | currency:'EUR' }}</span>
+    </div>
+    <div class="add-indicator">+</div>
+  </div>
+
+  <!-- Mensaje si no hay productos en la categoría -->
+  <div *ngIf="productosFiltrados().length === 0" class="empty-state">
+    <p>No hay productos disponibles en <strong>{{ categoriaActiva() }}</strong></p>
+  </div>
+</div>
+
+
+</div>
+
+<!-- PANEL DE TICKET (DERECHA) -->
+
+<aside class="ticket-panel">
+<div class="ticket-header">
+<h3>Comanda Actual</h3>
+<div class="customer-info" *ngIf="nombreCliente()">
+<small>Cliente:</small> <strong>{{ nombreCliente() }}</strong>
+</div>
+</div>
+
+<div class="ticket-body">
+  <!-- Estado vacío del ticket -->
+  <div *ngIf="lineasPedido().length === 0" class="ticket-empty-msg">
+      <p>Selecciona productos para comenzar el pedido</p>
+  </div>
+
+  <!-- Listado de líneas del ticket -->
+  <div *ngFor="let item of lineasPedido(); let i = index" class="ticket-line">
+    <div class="line-qty">{{ item.cantidad }}x</div>
+    <div class="line-details">
+      <span class="item-name">{{ item.nombre }}</span>
+      <span class="item-price-unit">{{ item.precio | currency:'EUR' }}</span>
+    </div>
+    <div class="line-total">
+      {{ (item.precio * item.cantidad) | currency:'EUR' }}
+    </div>
+    <button (click)="quitarProducto(i)" class="btn-remove-item">×</button>
+  </div>
+</div>
+
+<div class="ticket-footer">
+  <div class="total-summary">
+    <span class="label">TOTAL COMANDA</span>
+    <span class="amount">{{ totalComanda | currency:'EUR' }}</span>
+  </div>
+  
+  <button 
+    [disabled]="lineasPedido().length === 0" 
+    (click)="enviarPedido()" 
+    class="btn-order">
+    ENVIAR A COCINA 🔥
+  </button>
+</div>
+
+
+</aside>
+
+<!-- MODAL DE FICHA TÉCNICA (INGREDIENTES) -->
+
+<div class="modal-overlay" *ngIf="productoSeleccionadoParaInfo()" (click)="cerrarInfo()">
+<div class="modal-card info-modal animate-in" (click)="$event.stopPropagation()">
+<header class="modal-header">
+<div class="header-main">
+<h3>Ficha Técnica</h3>
+<h2>{{ productoSeleccionadoParaInfo().nombre }}</h2>
+</div>
+<button class="btn-close-modal" (click)="cerrarInfo()">×</button>
+</header>
+
+  <div class="modal-content">
+    <!-- Imagen también en el modal si existe -->
+    <div class="modal-product-img" *ngIf="productoSeleccionadoParaInfo().imagenUrl">
+      <img [src]="productoSeleccionadoParaInfo().imagenUrl" [alt]="productoSeleccionadoParaInfo().nombre">
+    </div>
+
+    <div class="ingredientes-section">
+      <p class="section-title">Composición e Ingredientes:</p>
+      
+      <!-- Lista de ingredientes del producto -->
+      <div *ngIf="!productoSeleccionadoParaInfo().ingredientes || productoSeleccionadoParaInfo().ingredientes.length === 0" class="no-data">
+        No se han detallado ingredientes para este producto.
       </div>
+
+      <ul class="ingredientes-list">
+        <li *ngFor="let rel of productoSeleccionadoParaInfo().ingredientes">
+          <span class="ing-name">{{ rel.ingrediente?.nombre }}</span>
+          <span class="ing-dot"></span>
+          <span class="ing-qty">{{ rel.cantidadNecesaria }} {{ rel.ingrediente?.unidad }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="price-info-box">
+      <span>Precio de venta al público:</span>
+      <strong>{{ productoSeleccionadoParaInfo().precio | currency:'EUR' }}</strong>
     </div>
   </div>
 
-  <aside class="ticket-panel">
-    <div class="ticket-header">
-      <h3>Ticket: {{ ubicacion() }}</h3>
-      <small>{{ nombreCliente() }}</small>
-    </div>
-    <div class="ticket-body">
-      <div *ngFor="let item of lineasPedido()" class="ticket-item">
-        <span>{{ item.cantidad }}x {{ item.nombre }}</span>
-        <span>{{ (item.precio * item.cantidad) | currency:'EUR' }}</span>
-      </div>
-    </div>
-    <div class="ticket-footer">
-      <div class="total-row">
-        <span>TOTAL: {{ totalComanda | currency:'EUR' }}</span>
-      </div>
-      <button [disabled]="lineasPedido().length === 0" (click)="enviarPedido()" class="btn-order">
-        ENVIAR A COCINA 🔥
-      </button>
-    </div>
-  </aside>
+  <footer class="modal-footer">
+    <button class="btn-add-from-info" (click)="agregarProducto(productoSeleccionadoParaInfo()); cerrarInfo()">
+      🛒 Añadir a Comanda
+    </button>
+  </footer>
+</div>
+
+
+</div>
+
 </div>

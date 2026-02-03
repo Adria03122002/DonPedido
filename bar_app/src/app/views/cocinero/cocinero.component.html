@@ -12,10 +12,6 @@
 
     <div class="kds-controls">
       <!-- CONTADOR SIMPLE -->
-      <div class="kds-timer" [class.timer-low]="segundosRestantes() < 5">
-        <span class="timer-label">ACTUALIZANDO EN:</span>
-        <span class="timer-value">{{ segundosRestantes() }}s</span>
-      </div>
 
       <div class="kds-badge">
         {{ pedidos().length }} COMANDAS

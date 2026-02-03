@@ -10,56 +10,62 @@ export const Routes = [
     // --- 1. AUTENTICACIÓN Y USUARIOS ---
     {
         method: "post",
-        route: "/bar_app/login",
+        route: "login",
         controller: AuthController,
         action: "login",
     },
     {
         method: "post",
-        route: "/bar_app/usuarios",
+        route: "usuarios",
         controller: UsuarioController,
         action: "save",
     },
     {
         method: "get",
-        route: "/bar_app/usuarios",
+        route: "usuarios",
         controller: UsuarioController,
         action: "all",
     },
     {
         method: "delete",
-        route: "/bar_app/usuarios/:id",
+        route: "usuarios/:id",
         controller: UsuarioController,
         action: "remove",
+    },
+    {
+        method: "put",
+        route: "usuarios/:id",
+        controller: UsuarioController,
+        action: "update",
     },
     // --- 2. PRODUCTOS (CATÁLOGO) ---
     {
         method: "get",
-        route: "/bar_app/productos",
+        route: "productos",
         controller: ProductoController,
         action: "all",
     },
     {
         method: "get",
-        route: "/bar_app/productos/:id",
+        route: "productos/:id",
         controller: ProductoController,
         action: "one",
     },
     {
         method: "post",
-        route: "/bar_app/productos",
+        route: "productos",
         controller: ProductoController,
         action: "save", // Crea uno nuevo
     },
     {
         method: "put",
-        route: "/bar_app/productos/:id",
+        route: "productos/:id",
         controller: ProductoController,
         action: "update", // ARREGLO: Usa el nuevo método sincronizado para no duplicar
     },
     {
         method: "delete",
-        route: "/bar_app/productos/:id",
+        route: "productos/:id",
         controller: ProductoController,
         action: "delete",
     },
@@ -67,45 +73,45 @@ export const Routes = [
     // --- 3. INGREDIENTES (ALMACÉN) ---
     {
         method: "get",
-        route: "/bar_app/ingredientes",
+        route: "ingredientes",
         controller: IngredienteController,
         action: "all",
     },
     {
         method: "post",
-        route: "/bar_app/ingredientes",
+        route: "ingredientes",
         controller: IngredienteController,
         action: "save",
     },
     {
         method: "put",
-        route: "/bar_app/ingredientes/:id",
+        route: "ingredientes/:id",
         controller: IngredienteController,
-        action: "save",
+        action: "update",
     },
 
     // --- 4. RECETAS (PRODUCTO-INGREDIENTES) ---
     {
         method: "get",
-        route: "/bar_app/producto-ingredientes",
+        route: "producto-ingredientes",
         controller: ProductoIngredienteController,
         action: "all",
     },
     {
         method: "get",
-        route: "/bar_app/producto-ingredientes/producto/:id",
+        route: "producto-ingredientes/producto/:id",
         controller: ProductoIngredienteController,
         action: "getByProducto",
     },
     {
         method: "post",
-        route: "/bar_app/producto-ingredientes",
+        route: "producto-ingredientes",
         controller: ProductoIngredienteController,
         action: "save",
     },
     {
         method: "delete",
-        route: "/bar_app/producto-ingredientes/:id",
+        route: "producto-ingredientes/:id",
         controller: ProductoIngredienteController,
         action: "remove",
     },
@@ -113,61 +119,61 @@ export const Routes = [
     // --- 5. PEDIDOS (ORDEN CRÍTICO: RUTAS FIJAS ANTES QUE DINÁMICAS) ---
      { 
         method: "get", 
-        route: "/bar_app/pedidos/activos", 
+        route: "pedidos/activos", 
         controller: PedidoController, 
         action: "getPedidosActivos" 
     },
     { 
         method: "get", 
-        route: "/bar_app/pedidos/mapa-mesas", 
+        route: "pedidos/mapa-mesas", 
         controller: PedidoController, 
         action: "getMapaMesas" 
     },
     { 
         method: "get", 
-        route: "/bar_app/pedidos/mesa/:ubicacionString/activo", 
+        route: "pedidos/mesa/:ubicacionString/activo", 
         controller: PedidoController, 
         action: "getPedidoActivoPorMesa" 
     },
     { 
         method: "get", 
-        route: "/bar_app/pedidos", 
+        route: "pedidos", 
         controller: PedidoController, 
         action: "all" 
     },
     { 
         method: "get", 
-        route: "/bar_app/pedidos/:id", 
+        route: "pedidos/:id", 
         controller: PedidoController, 
         action: "one" 
     },
     { 
         method: "post", 
-        route: "/bar_app/pedidos", 
+        route: "pedidos", 
         controller: PedidoController, 
         action: "save" 
     },
     { 
         method: "put", 
-        route: "/bar_app/pedidos/:id", 
+        route: "pedidos/:id", 
         controller: PedidoController, 
         action: "updatePedido" 
     },
     { 
         method: "put", 
-        route: "/bar_app/pedidos/:id/estado", 
+        route: "pedidos/:id/estado", 
         controller: PedidoController, 
         action: "actualizarEstado" 
     },
     { 
         method: "put", 
-        route: "/bar_app/pedidos/:id/pagar", 
+        route: "pedidos/:id/pagar", 
         controller: PedidoController, 
         action: "marcarComoPagado" 
     },
     { 
         method: "delete", 
-        route: "/bar_app/pedidos/:id", 
+        route: "pedidos/:id", 
         controller: PedidoController, 
         action: "delete" 
     },
@@ -175,31 +181,31 @@ export const Routes = [
     // --- 6. LÍNEAS DE PEDIDO (AUXILIARES) ---
     {
         method: "get",
-        route: "/bar_app/lineas-pedido",
+        route: "lineas-pedido",
         controller: LineaPedidoController,
         action: "all",
     },
     {
         method: "get",
-        route: "/bar_app/pedidos/:pedidoId/lineas",
+        route: "pedidos/:pedidoId/lineas",
         controller: LineaPedidoController,
         action: "findByPedido",
     },
     {
         method: "post",
-        route: "/bar_app/lineas-pedido",
+        route: "lineas-pedido",
         controller: LineaPedidoController,
         action: "save",
     },
     {
         method: "put",
-        route: "/bar_app/lineas-pedido/:id",
+        route: "lineas-pedido/:id",
         controller: LineaPedidoController,
         action: "update",
     },
     {
         method: "delete",
-        route: "/bar_app/lineas-pedido/:id",
+        route: "lineas-pedido/:id",
         controller: LineaPedidoController,
         action: "delete",
     },

@@ -15,43 +15,36 @@ import { Pedido } from 'src/app/interfaces/pedido';
 export class CocineroComponent implements OnInit, OnDestroy {
   private pedidoService = inject(PedidoService);
   private authService = inject(AuthService);
-  private router = inject(Router);
   
   pedidos = signal<Pedido[]>([]);
-  
-  // Lógica de refresco automático
-  segundosRestantes = signal(15);
-  private timerInterval: any;
+  private refrescoInterval: any;
 
   ngOnInit(): void {
     this.cargarPedidos();
-    this.iniciarTemporizador();
+    this.iniciarRefrescoAutomatico();
   }
 
   ngOnDestroy(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
+    if (this.refrescoInterval) {
+      clearInterval(this.refrescoInterval);
     }
   }
 
-  iniciarTemporizador(): void {
-    this.timerInterval = setInterval(() => {
-      this.segundosRestantes.update(s => s - 1);
-      
-      if (this.segundosRestantes() <= 0) {
-        this.cargarPedidos();
-        this.segundosRestantes.set(15); // Reiniciar cuenta atrás
-      }
-    }, 1000);
+  iniciarRefrescoAutomatico(): void {
+    this.refrescoInterval = setInterval(() => {
+      this.cargarPedidos();
+    }, 5000);
   }
 
   cargarPedidos(): void {
-    this.pedidoService.getPedidosActivos().subscribe({
+    this.pedidoService.getPedidos().subscribe({
       next: (res) => {
-        // --- CAMBIO CLAVE: ORDENAMIENTO POR TIEMPO ---
-        // Ordenamos de menor a mayor tiempo (el más antiguo primero)
-        // Comparamos los milisegundos de las fechas
-        const pedidosOrdenados = res.sort((a, b) => {
+        const filtrados = res.filter(p => 
+          !p.pagado && 
+          (p.estado === 'pendiente' || p.estado === 'en preparación')
+        );
+
+        const pedidosOrdenados = filtrados.sort((a, b) => {
           return new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
         });
         
@@ -61,9 +54,6 @@ export class CocineroComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Optimización para la renderización de listas en Angular 16
-   */
   trackById(index: number, item: Pedido): number {
     return item.id;
   }
@@ -89,7 +79,6 @@ export class CocineroComponent implements OnInit, OnDestroy {
   marcarComoTerminado(id: number): void {
     this.pedidoService.actualizarEstado(id, 'servido').subscribe({
       next: () => {
-        // Eliminamos el pedido de la vista actual inmediatamente
         this.pedidos.update(p => p.filter(item => item.id !== id));
       },
       error: (err) => console.error('Error al actualizar estado:', err)
