@@ -1,8 +1,0 @@
-- Solucionar error en Listar Producto (No muestra ingredientes)
-- Ver los errores que van saliendo cuando creas un pedido
-- Cambiar la interfaz para pedir
-- Crear interfaz para el Camarero
-- Cambiar interfaz para Cocineros mas actualizar cada 20 segundos automáticamente
-- Fer login mail y passwd
-- Añadir productes a la bda
-- Arreglar vista cocinero
