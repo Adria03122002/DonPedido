@@ -2,6 +2,7 @@ import { AppDataSource } from "../data-source";
 import { Request, Response } from "express";
 import { Ingrediente } from "../entity/Ingrediente";
 import { LessThan } from "typeorm";
+import { Producto } from "../entity/Producto";
 
 export class IngredienteController {
     private repo = AppDataSource.getRepository(Ingrediente);
@@ -34,15 +35,74 @@ export class IngredienteController {
         }
     }
 
-    // Añadir o actualizar ingrediente
+    // Actualizar ingrediente
+    async update(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
+        const { nombre, stock, cantidad, disponible, unidad, tipo } = req.body;
+
+        try {
+            let ingrediente = await this.repo.findOneBy({ id });
+
+            if (!ingrediente) {
+                res.status(404);
+                return { message: "Ingrediente no encontrado" };
+            }
+
+            ingrediente.nombre = nombre || ingrediente.nombre;
+            ingrediente.unidad = unidad || ingrediente.unidad;
+            ingrediente.tipo = tipo || ingrediente.tipo;
+
+            if (cantidad !== undefined) {
+                ingrediente.cantidad = Number(cantidad);
+            } else if (stock !== undefined) {
+                ingrediente.cantidad = Number(stock);
+            }
+
+            if (disponible !== undefined) {
+                ingrediente.disponible = (disponible === true || disponible === 'true');
+            }
+
+            const resultado = await this.repo.save(ingrediente);
+
+            if (disponible !== undefined) {
+                const valorDisponible = (disponible === true || disponible === 'true');
+                const productoRepo = AppDataSource.getRepository(Producto);
+                
+                const productosAfectados = await productoRepo.find({
+                    where: {
+                        ingredientes: {
+                            ingrediente: { id: id }
+                        }
+                    }
+                });
+
+                if (productosAfectados.length > 0) {
+                    for (const prod of productosAfectados) {
+                        prod.disponible = valorDisponible;
+                        await productoRepo.save(prod);
+                    }
+                }
+            }
+
+            return resultado;
+        } catch (error) {
+            console.error("Error al actualizar ingrediente:", error);
+            res.status(500);
+            return { message: "Error al actualizar cantidad" };
+        }
+    }
+
+    // Añadir ingrediente
     async save(req: Request, res: Response) {
-        const { nombre, cantidad, unidad } = req.body;
+        const { nombre, cantidad, unidad, tipo, disponible } = req.body;
 
         try {
             const item = new Ingrediente();
             item.nombre = String(nombre);
             item.cantidad = Number(cantidad);
             item.unidad = String(unidad || "uds");
+            item.disponible =  disponible;
+            item.tipo = String(tipo || "");
 
             return await this.repo.save(item);
         } catch (error: any) {

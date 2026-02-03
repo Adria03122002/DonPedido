@@ -1,0 +1,118 @@
+<div class="usuario-gestion-container animate-in">
+  <header class="section-header">
+    <h2>Gestión de <span class="accent">Usuarios</span></h2>
+    <p>Administra los accesos del personal al sistema.</p>
+  </header>
+
+  <div class="gestion-grid">
+    <aside class="form-card">
+      <h3>{{ usuarioEditando() ? 'Modificar' : 'Añadir Nuevo' }} Usuario</h3>
+      <form (ngSubmit)="guardarUsuario()" class="usuario-form">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" placeholder="Ej: Carlos Gómez" required>
+        </div>
+
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" [(ngModel)]="nuevoUsuario.email" name="email" placeholder="email@empresa.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Contraseña {{ usuarioEditando() ? '(Opcional)' : '' }}</label>
+          <input type="password" [(ngModel)]="nuevoUsuario.password" name="password" placeholder="••••••••" [required]="!usuarioEditando()">
+        </div>
+
+        <div class="form-group">
+          <label>Rol en el Sistema</label>
+          <select [(ngModel)]="nuevoUsuario.rol" name="rol">
+            <option value="" disabled selected>Selecciona un rol</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Camarero">Camarero</option>
+            <option value="Cocinero">Cocinero</option>
+          </select>
+        </div>
+
+        <div class="form-actions-vertical">
+          <button type="submit" class="btn-guardar">
+            <span>{{ usuarioEditando() ? '💾' : '➕' }}</span> 
+            {{ usuarioEditando() ? 'Guardar Cambios' : 'Registrar Usuario' }}
+          </button>
+          
+          <button type="button" *ngIf="usuarioEditando()" (click)="cerrarModalAlta()" class="btn-cancelar-edit">
+            Cancelar Edición
+          </button>
+        </div>
+      </form>
+    </aside>
+
+    <main class="tabla-card">
+      <div class="tabla-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of usuarios()" [class.editing-row]="usuarioEditando()?.id === user.id">
+              <td>
+                <div class="user-info">
+                  <div class="user-avatar">{{ user.nombre.charAt(0) }}</div>
+                  <strong>{{ user.nombre }}</strong>
+                  <span *ngIf="user.id === idUsuarioActual()" class="badge-self">Tú</span>
+                </div>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span class="badge-rol" [ngClass]="getNombreRol(user.rol)">
+                  {{ getNombreRol(user.rol) }}
+                </span>
+              </td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-icon edit" (click)="abrirEditar(user)" title="Editar">
+                    ✏️
+                  </button>
+                  <button *ngIf="user.id !== idUsuarioActual()" 
+                          class="btn-icon delete" 
+                          (click)="pedirConfirmacion(user.id)" 
+                          title="Eliminar">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+<div class="modal-overlay" *ngIf="usuarioAEliminar()">
+    <div class="modal-card confirmation-modal animate-in">
+      <div class="modal-alert-icon">
+        <div class="icon-circle">
+          <span>⚠️</span>
+        </div>
+      </div>
+      
+      <div class="modal-content">
+        <h3>¿Eliminar usuario?</h3>
+        <p>Esta acción <strong>no se puede deshacer</strong>. El usuario perderá el acceso al sistema de forma inmediata y permanente.</p>
+      </div>
+
+      <div class="modal-footer-actions">
+        <button class="btn-modal-action cancel" (click)="cancelarEliminacion()">
+          Cancelar
+        </button>
+        <button class="btn-modal-action confirm-delete" (click)="confirmarEliminacion()">
+          Eliminar Permanentemente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

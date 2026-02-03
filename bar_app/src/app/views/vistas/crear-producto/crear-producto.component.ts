@@ -5,63 +5,82 @@ import { ProductoIngrediente } from 'src/app/interfaces/producto-ingrediente';
 import { ProductoService } from 'src/app/services/producto.service';
 import { IngredienteService } from 'src/app/services/ingrediente.service';
 import { ProductoIngredienteService } from 'src/app/services/producto-ingrediente.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-crear-producto',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './crear-producto.component.html',
   styleUrls: ['./crear-producto.component.css']
 })
 export class CrearProductoComponent implements OnInit {
 
+  esEdicion: boolean = false;
+  nuevoProducto: Producto = {
+    id: 0,
+    nombre: '',
+    tipo: '',
+    precio: 0,
+    imagenUrl: '',
+    disponible: true,
+    stock: null
+  } as Producto;
+
+  ingredientes: Ingrediente[] = [];
+  ingredientesSeleccionados: number[] = [];
+  cantidades: { [ingredienteId: number]: number } = {};
+
+  tiposExcluidos = ['bebida', 'complemento'];
+  tiposProducto: string[] = [
+    'hamburguesa', 'bocadillo', 'pizza', 'ensalada', 'ración', 'pasta',
+    'plato_combinado', 'sopa_crema', 'postre', 'pastelería', 'helado',
+    'desayuno', 'cafetería', 'cerveza', 'vino', 'zumo_refresco', 'extra',
+    'refresco', 'entrantes', 'otros'
+  ];
+
   constructor(
     private productoService: ProductoService,
     private ingredienteService: IngredienteService,
+    private productoIngredienteService: ProductoIngredienteService,
     private route: ActivatedRoute,
-    private productoIngredienteService: ProductoIngredienteService
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
-      this.productoService.getOne(+id).subscribe(producto => {
-        this.nuevoProducto = producto;
-
-        this.productoIngredienteService.getAll().subscribe(relaciones => {
-          const relacionesDelProducto = relaciones.filter(pi => pi.producto.id === producto.id);
-
-          this.ingredientesSeleccionados = relacionesDelProducto
-            .map(pi => pi.ingrediente?.id)
-            .filter((id): id is number => typeof id === 'number');
-
-          this.cantidades = {};
-          relacionesDelProducto.forEach(pi => {
-            const ingredienteId = pi.ingrediente?.id;
-            if (typeof ingredienteId === 'number') {
-              this.cantidades[ingredienteId] = pi.cantidadNecesaria;
-            }
-          });
-        });
-      });
+      this.esEdicion = true;
+      this.cargarProducto(Number(id));
     }
 
     this.cargarIngredientes();
   }
 
-  tiposExcluidos = ['bebida', 'complemento'];
+  cargarProducto(id: number): void {
+    this.productoService.getOne(id).subscribe(producto => {
+      this.nuevoProducto = producto;
 
-  tiposProducto: string[] = [
-    'hamburguesa', 'bocadillo', 'pizza', 'ensalada', 'ración', 'pasta',
-    'plato_combinado', 'sopa_crema', 'postre', 'pastelería', 'helado',
-    'desayuno', 'cafetería', 'cerveza', 'vino', 'zumo_refresco', 'extra',
-    'refresco', 'otros'
-  ];
+      this.productoIngredienteService.getAll().subscribe(relaciones => {
+        const relacionesDelProducto = relaciones.filter(pi => pi.producto.id === producto.id);
 
-  nuevoProducto: Producto = {} as Producto;
-  ingredientes: Ingrediente[] = [];
-  ingredientesSeleccionados: number[] = [];
-  cantidades: { [ingredienteId: number]: number } = {};
+        this.ingredientesSeleccionados = relacionesDelProducto
+          .map(pi => pi.ingrediente?.id)
+          .filter((id): id is number => typeof id === 'number');
+
+        this.cantidades = {};
+        relacionesDelProducto.forEach(pi => {
+          const ingredienteId = pi.ingrediente?.id;
+          if (typeof ingredienteId === 'number') {
+            this.cantidades[ingredienteId] = pi.cantidadNecesaria;
+          }
+        });
+      });
+    });
+  }
 
   cargarIngredientes(): void {
     this.ingredienteService.getAll().subscribe(data => {
@@ -82,57 +101,64 @@ export class CrearProductoComponent implements OnInit {
       delete this.cantidades[id];
     } else {
       this.ingredientesSeleccionados.push(id);
-      this.cantidades[id] = 1; // valor inicial
+      this.cantidades[id] = 1;
     }
   }
 
-  crearProducto(): void {
+  guardar(): void {
     if (this.ingredientesSeleccionados.length === 0) {
-      alert('ADVERTENCIA: Debes seleccionar al menos un ingrediente para crear la receta del producto.');
+      alert('ADVERTENCIA: Debes seleccionar al menos un ingrediente.');
       return;
     }
 
-    // Validación de cantidades
     for (const id of this.ingredientesSeleccionados) {
-      const cantidad = this.cantidades[id];
-      if (cantidad == null || cantidad <= 0) {
-        const ingrediente = this.ingredientes.find(i => i.id === id);
-        alert(`ERROR: La cantidad necesaria para ${ingrediente?.nombre || 'un ingrediente'} debe ser un número positivo.`);
+      if (!this.cantidades[id] || this.cantidades[id] <= 0) {
+        const ing = this.ingredientes.find(i => i.id === id);
+        alert(`ERROR: La cantidad para ${ing?.nombre} debe ser mayor a 0.`);
         return;
       }
     }
 
-    const productoAEnviar: Producto = { ...this.nuevoProducto };
-    this.productoService.create(productoAEnviar).subscribe(productoCreado => {
-      
-      const relaciones: ProductoIngrediente[] = this.ingredientesSeleccionados.map(id => ({
-        id: 0,
-        producto: productoCreado,
-        ingrediente: this.ingredientes.find(i => i.id === id)!,
-        cantidadNecesaria: this.cantidades[id] 
-      }));
+    if (this.esEdicion) {
+      this.actualizarExistente();
+    } else {
+      this.crearNuevo();
+    }
+  }
 
-      // Guardar cada relación
-      relaciones.forEach(relacion => {
-        this.productoIngredienteService.create(relacion).subscribe();
-      });
-
+  private crearNuevo(): void {
+    this.productoService.create(this.nuevoProducto).subscribe(productoCreado => {
+      this.guardarRelacionesIngredientes(productoCreado);
       alert('Producto creado correctamente');
-      this.resetFormulario();
+      this.router.navigate(['/barra/productos']);
+    });
+  }
+
+  private actualizarExistente(): void {
+    this.productoService.update(this.nuevoProducto.id, this.nuevoProducto).subscribe(productoActualizado => {
+      this.guardarRelacionesIngredientes(productoActualizado);
+      alert('Producto actualizado correctamente');
+      this.router.navigate(['/barra/productos']);
+    });
+  }
+
+  private guardarRelacionesIngredientes(producto: Producto): void {
+    const relaciones: ProductoIngrediente[] = this.ingredientesSeleccionados.map(id => ({
+      id: 0,
+      producto: producto,
+      ingrediente: this.ingredientes.find(i => i.id === id)!,
+      cantidadNecesaria: this.cantidades[id]
+    }));
+
+    relaciones.forEach(relacion => {
+      this.productoIngredienteService.create(relacion).subscribe();
     });
   }
 
   resetFormulario(): void {
-    this.nuevoProducto = {
-      id: 0,
-      nombre: '',
-      tipo: '',
-      precio: 0,
-      imagenUrl: '',
-      disponible: true,
-      stock: null
-    };
+    this.nuevoProducto = { id: 0, nombre: '', tipo: '', precio: 0, imagenUrl: '', disponible: true, stock: null } as Producto;
     this.ingredientesSeleccionados = [];
     this.cantidades = {};
+    this.esEdicion = false;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { Pedido } from 'src/app/interfaces/pedido';
 import { PedidoService } from 'src/app/services/pedido.service';
 import { Router } from '@angular/router';
@@ -9,17 +9,31 @@ import jsPDF from 'jspdf';
   templateUrl: './pedido.component.html',
   styleUrls: ['./pedido.component.css']
 })
-export class PedidoComponent implements OnInit {
+export class PedidoComponent implements OnInit, OnDestroy {
+  private pedidoService = inject(PedidoService);
+  private router = inject(Router);
+
   pedidos: Pedido[] = [];
-
-
   cargando = signal(false);
   mensajeFeedback = signal<{ texto: string, tipo: 'success' | 'error' } | null>(null);
-
-  constructor(private pedidoService: PedidoService, private router: Router) {}
+  
+  private refrescoInterval: any;
 
   ngOnInit(): void {
     this.cargarPedidos();
+    this.iniciarRefrescoAutomatico();
+  }
+
+  ngOnDestroy(): void {
+    if (this.refrescoInterval) {
+      clearInterval(this.refrescoInterval);
+    }
+  }
+
+  iniciarRefrescoAutomatico() {
+    this.refrescoInterval = setInterval(() => {
+      this.cargarPedidosSilencioso();
+    }, 5000);
   }
 
   mostrarMensaje(texto: string, tipo: 'success' | 'error' = 'success') {
@@ -35,18 +49,36 @@ export class PedidoComponent implements OnInit {
     }, 0);
   }
 
-
   cargarPedidos() {
     this.cargando.set(true);
     this.pedidoService.getPedidos().subscribe({
       next: (data) => {
-        this.pedidos = data.filter(p => !p.pagado);
+        const noPagados = data.filter(p => !p.pagado);
+        
+        this.pedidos = noPagados.sort((a, b) => {
+          return new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
+        });
+
         this.cargando.set(false);
+        console.log('Pedidos cargados y ordenados en barra:', this.pedidos);
       },
       error: (err) => {
+        console.error('Error al cargar pedidos:', err);
         this.cargando.set(false);
         this.mostrarMensaje('Error al conectar con el servidor', 'error');
       }
+    });
+  }
+
+  cargarPedidosSilencioso() {
+    this.pedidoService.getPedidos().subscribe({
+      next: (data) => {
+        const noPagados = data.filter(p => !p.pagado);
+        this.pedidos = noPagados.sort((a, b) => {
+          return new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
+        });
+      },
+      error: (err) => console.error('Error en refresco silencioso:', err)
     });
   }
 
@@ -55,8 +87,6 @@ export class PedidoComponent implements OnInit {
     if (!pedido) return;
 
     const total = this.calcularTotal(pedido);
-    
-    // Generación del ticket PDF
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text(`TICKET DE CONSUMO - ${pedido.ubicacion}`, 10, 20);
@@ -85,7 +115,6 @@ export class PedidoComponent implements OnInit {
     
     doc.save(`ticket_${pedido.ubicacion}_${Date.now()}.pdf`);
 
-    // Actualizamos el estado a 'listo para cobrar' o directamente a pagado según tu lógica
     this.pedidoService.actualizarEstado(id, 'listo para cobrar').subscribe({
       next: () => {
         this.mostrarMensaje(`Ticket generado para ${pedido.ubicacion}.`);
@@ -103,7 +132,6 @@ export class PedidoComponent implements OnInit {
   }
 
   eliminarPedido(id: number) {
-    // Protección: No permitir borrar pedidos del usuario actual si tuvieras esa lógica aquí
     this.pedidoService.delete(id).subscribe({
       next: () => {
         this.mostrarMensaje('Comanda eliminada correctamente.');
@@ -111,11 +139,7 @@ export class PedidoComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al eliminar:', err);
-        if (err.status === 403) {
-          this.mostrarMensaje('No se puede eliminar un pedido activo', 'error');
-        } else {
-          this.mostrarMensaje('Error al eliminar el pedido', 'error');
-        }
+        this.mostrarMensaje('Error al eliminar el pedido', 'error');
       }
     });
   }

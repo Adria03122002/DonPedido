@@ -1,4 +1,3 @@
-/* Contenedor principal con espaciado y fuente moderna */
 .usuario-gestion-container {
   padding: 2.5rem;
   background-color: #f8fafc;
@@ -6,7 +5,6 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Cabecera de la sección */
 .section-header {
   margin-bottom: 2.5rem;
 }
@@ -29,7 +27,6 @@
   font-size: 1.1rem;
 }
 
-/* Layout en cuadrícula: Formulario (350px) y Tabla (Flexible) */
 .gestion-grid {
   display: grid;
   grid-template-columns: 380px 1fr;
@@ -37,13 +34,12 @@
   align-items: start;
 }
 
-/* Tarjeta del Formulario de Alta */
 .form-card {
   background: #ffffff;
   padding: 2rem;
   border-radius: 1.25rem;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
 .form-card h3 {
@@ -79,6 +75,7 @@
   color: #1e293b;
   transition: all 0.2s ease;
   background-color: #f8fafc;
+  box-sizing: border-box;
 }
 
 .form-group input:focus, 
@@ -87,6 +84,13 @@
   border-color: #3b82f6;
   background-color: #ffffff;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.form-actions-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 .btn-guardar {
@@ -104,7 +108,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  margin-top: 1.5rem;
 }
 
 .btn-guardar:hover {
@@ -113,7 +116,22 @@
   filter: brightness(1.1);
 }
 
-/* Tarjeta de la Tabla de Usuarios */
+.btn-cancelar-edit {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancelar-edit:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 .tabla-card {
   background: #ffffff;
   border-radius: 1.25rem;
@@ -156,7 +174,10 @@ tbody tr:hover {
   background-color: #fcfdfe;
 }
 
-/* Información de Usuario y Avatar */
+tbody tr.editing-row {
+  background-color: #eff6ff;
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -178,7 +199,16 @@ tbody tr:hover {
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* Badges de Rol */
+.badge-self {
+  background: #10b981;
+  color: white;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .badge-rol {
   display: inline-block;
   padding: 0.35rem 0.85rem;
@@ -189,19 +219,29 @@ tbody tr:hover {
   letter-spacing: 0.025em;
 }
 
-.badge-rol.admin {
+.badge-rol.Administrador {
   background-color: #fef3c7;
   color: #92400e;
   border: 1px solid #fde68a;
 }
 
-.badge-rol.camarero {
+.badge-rol.Camarero {
   background-color: #e0f2fe;
   color: #075985;
   border: 1px solid #bae6fd;
 }
 
-/* Botones de acción */
+.badge-rol.Cocinero {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .btn-icon {
   background: none;
   border: none;
@@ -210,6 +250,18 @@ tbody tr:hover {
   border-radius: 0.5rem;
   transition: all 0.2s ease;
   line-height: 1;
+}
+
+.btn-icon.edit {
+  background-color: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-icon.edit:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
 }
 
 .btn-icon.delete {
@@ -223,7 +275,100 @@ tbody tr:hover {
   transform: scale(1.1);
 }
 
-/* Animaciones de entrada */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-card.confirmation-modal {
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.modal-alert-icon {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.icon-circle {
+  width: 80px;
+  height: 80px;
+  background-color: #fff1f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #fef2f2;
+}
+
+.icon-circle span {
+  font-size: 2.5rem;
+}
+
+.modal-content h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
+}
+
+.modal-content p {
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.modal-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-modal-action {
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-modal-action.cancel {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.btn-modal-action.cancel:hover {
+  background-color: #e2e8f0;
+}
+
+.btn-modal-action.confirm-delete {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-modal-action.confirm-delete:hover {
+  background-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
 .animate-in {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -233,7 +378,6 @@ tbody tr:hover {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Adaptabilidad para pantallas pequeñas */
 @media (max-width: 1100px) {
   .gestion-grid {
     grid-template-columns: 1fr;

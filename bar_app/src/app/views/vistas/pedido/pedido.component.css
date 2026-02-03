@@ -1,123 +1,213 @@
+/* Variables de Diseño */
+:host {
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --bg-app: #f8fafc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --card-bg: #ffffff;
+}
+
 .admin-container {
-  padding: 2rem;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f6f8;
+  padding: 2.5rem;
+  background-color: var(--bg-app);
   min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-.vista-buttons {
-  display: flex;
-  justify-content: center;
+/* Título de la sección */
+.admin-container h3 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-main);
   margin-bottom: 2rem;
-  gap: 1rem;
+  letter-spacing: -0.025em;
 }
 
-.vista-buttons button {
-  background-color: #3498db;
-  border: none;
+/* Notificaciones (Feedback) */
+.feedback-toast {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
   color: white;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease-out;
 }
 
-.vista-buttons button:hover {
-  background-color: #2980b9;
-}
+.feedback-toast.success { background-color: var(--success); }
+.feedback-toast.error { background-color: var(--danger); }
 
-.vista-buttons button.active {
-  background-color: #2ecc71;
+/* Grid de Comandas */
+/* Asegúrate de que el contenedor de los pedidos tenga una clase para el grid si quieres columnas */
+.pedidos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
 }
 
 .pedido-card {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--card-bg);
+  border-radius: 1.25rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
-  margin-bottom: 2rem;
-  transition: transform 0.2s ease;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .pedido-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
+/* Estados visuales en la tarjeta */
+.en-preparacion { border-left: 6px solid var(--primary); }
+.servido { border-left: 6px solid var(--success); }
+
+/* Cabecera de la Comanda */
 .pedido-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 0.5rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .pedido-header h3 {
   margin: 0;
-  font-size: 1.3rem;
-  color: #2c3e50;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  flex: 1;
 }
 
+.pedido-total {
+  font-weight: 800;
+  color: var(--primary);
+  font-size: 1.1rem;
+  background: #eff6ff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+/* Estados (estado-tag) */
 .estado-tag {
-  padding: 0.3rem 0.7rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: white;
-  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-top: 0.5rem;
+  width: fit-content;
 }
 
-/* Colores dinámicos según el estado */
-.estado-preparacion {
-  background-color: #3498db; /* azul */
-}
+.estado-preparacion { background-color: #e0f2fe; color: #075985; }
+.estado-servido { background-color: #dcfce7; color: #166534; }
 
-.estado-servido {
-  background-color: #2ecc71; /* verde */
-}
-
-.estado-otro {
-  background-color: #f39c12; /* naranja (por si hay estados personalizados) */
-}
-
-
+/* Lista de Productos (linea-producto) */
 .linea-producto {
   display: flex;
   justify-content: space-between;
-  margin: 0.4rem 0;
-  border-bottom: 1px dashed #ccc;
-  padding-bottom: 0.3rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .linea-producto span {
-  color: #34495e;
-  font-weight: 500;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
 }
 
 .linea-mod {
+  font-size: 0.85rem;
+  color: var(--text-muted);
   font-style: italic;
-  color: #7f8c8d;
+  font-weight: normal !important;
 }
 
+/* Información de fecha/tiempo */
 .fecha-info {
-  margin-top: 0.5rem;
+  margin-top: 1rem;
   font-size: 0.85rem;
-  color: #888;
+  color: var(--text-muted);
+  font-weight: 500;
 }
+
+/* Contenedor de Acciones */
+.acciones-contenedor {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Botones */
+.btn-modificar, .btn-eliminar, .btn-pagar {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn-modificar {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+.btn-modificar:hover { background-color: #e2e8f0; }
+
+.btn-eliminar {
+  background-color: #fff1f2;
+  color: var(--danger);
+}
+.btn-eliminar:hover { background-color: var(--danger); color: white; }
 
 .btn-pagar {
-  margin-top: 1rem;
-  background-color: #e74c3c;
+  grid-column: span 2;
+  background-color: var(--primary);
   color: white;
-  border: none;
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  margin-top: 0.25rem;
+}
+.btn-pagar:hover { 
+  background-color: var(--primary-hover); 
+  transform: scale(1.02);
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
 }
 
-.btn-pagar:hover {
-  background-color: #c0392b;
+/* Animaciones */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade {
+  animation: fadeIn 0.5s ease-out;
 }

@@ -3,5 +3,8 @@ export interface Usuario {
   nombre: string;
   email: string;
   password?: string;
-  rol: 'Administrador' | 'Camarero' | 'Cocinero';
+  rol: {
+    id: number;
+    nombre: string;
+  } | string; 
 }

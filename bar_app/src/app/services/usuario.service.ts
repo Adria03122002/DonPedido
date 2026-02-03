@@ -18,6 +18,10 @@ export class UsuarioService {
     return this.http.post<Usuario>(this.url, usuario);
   }
 
+  update(id: number, usuario: any): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.url}/${id}`, usuario);
+  }
+
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.url}/${id}`);
   }

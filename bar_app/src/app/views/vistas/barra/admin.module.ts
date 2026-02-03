@@ -8,7 +8,6 @@ import { StockControlComponent } from '../stock-control/stock-control.component'
 import { CrearIngredienteComponent } from '../crear-ingrediente/crear-ingrediente.component';
 import { TiempoTranscurridoPipe } from 'src/app/pipes/tiempo-transcurrido.pipe';
 import { PedidoComponent } from '../pedido/pedido.component';
-import { CrearProductoComponent } from '../crear-producto/crear-producto.component';
 import { ProductoListaComponent } from '../producto-lista/producto-lista.component';
 
 @NgModule({
@@ -18,7 +17,6 @@ import { ProductoListaComponent } from '../producto-lista/producto-lista.compone
     CrearIngredienteComponent,
     TiempoTranscurridoPipe,
     PedidoComponent,
-    CrearProductoComponent,
     ProductoListaComponent,
   ],
   imports: [

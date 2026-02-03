@@ -25,21 +25,49 @@ export class UsuarioController {
         }
     }
 
-    // Obtener un usuario por ID
-    async one(req: Request, res: Response) {
-        const { id } = req.params as any;
-        return this.userRepo.findOne({
-            where: { id: Number(id) },
-            relations: ["rol"]
-        });
+    async update(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
+        const { nombre, email, password, rol } = req.body;
+
+        try {
+            const usuario = await this.userRepo.findOne({ 
+                where: { id },
+                relations: ["rol"] 
+            });
+
+            if (!usuario) {
+                return res.status(404).json({ message: "Usuario no encontrado" });
+            }
+
+            usuario.nombre = nombre;
+            usuario.email = email;
+
+            if (password && password.trim() !== "") {
+                usuario.passwordHash = password;
+            }
+
+            if (rol && rol.id) {
+                const nuevoRol = await this.rolRepo.findOne({ where: { id: rol.id } });
+                if (nuevoRol) {
+                    usuario.rol = nuevoRol;
+                }
+            }
+
+            const resultado = await this.userRepo.save(usuario);
+            
+            delete resultado.passwordHash;
+            
+            return resultado;
+        } catch (error) {
+            console.error("Error al actualizar usuario:", error);
+            return res.status(500).json({ message: "Error interno al actualizar" });
+        }
     }
 
-    // Guardar o actualizar un usuario
     async save(req: Request, res: Response) {
         const { nombre, email, password, idRol } = req.body;
 
         try {
-            // Buscamos el objeto Rol (por defecto 2 si no viene especificado)
             const rol = await this.rolRepo.findOneBy({ id: idRol || 2 }); 
             
             if (!rol) {
@@ -50,7 +78,6 @@ export class UsuarioController {
             const nuevoUsuario = new Usuario();
             nuevoUsuario.nombre = nombre;
             nuevoUsuario.email = email;
-            // La contraseña se envía en texto plano; la entidad Usuario la encriptará
             nuevoUsuario.passwordHash = password; 
             nuevoUsuario.rol = rol;
 
@@ -61,7 +88,6 @@ export class UsuarioController {
         }
     }
 
-    // Eliminar un usuario
     async remove(req: Request, res: Response) {
         const { id } = req.params as any;
         try {

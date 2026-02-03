@@ -1,7 +1,7 @@
 <div class="form-crear-producto">
   <h2>Crear Producto</h2>
 
-  <form (ngSubmit)="crearProducto()">
+  <form (ngSubmit)="guardar()">
     <label>Nombre:</label>
     <input type="text" [(ngModel)]="nuevoProducto.nombre" name="nombre" required />
 
@@ -28,7 +28,6 @@
     <div class="ingrediente-selector">
       <h3>Seleccionar ingredientes:</h3>
       <div *ngFor="let ingrediente of ingredientes">
-        <!-- Comprobación segura de tiposExcluidos -->
         <ng-container *ngIf="!tiposExcluidos.includes(ingrediente.tipo)">
           <label>
             <input

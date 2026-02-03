@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { ProductoIngrediente } from "./ProductoIngrediente";
 
 @Entity('Ingrediente')
 export class Ingrediente {
@@ -8,7 +9,7 @@ export class Ingrediente {
   @Column()
   nombre: string;
 
-  @Column({ type: 'decimal', default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   cantidad: number;
 
   @Column({ default: 'unidad' }) // kg, g, ml, litros...
@@ -20,5 +21,6 @@ export class Ingrediente {
   @Column({ nullable: true })
   tipo: string;
 
-
+  @OneToMany(() => ProductoIngrediente, (pi) => pi.ingrediente)
+  productosDondeSeUsa: ProductoIngrediente[];
 }

@@ -35,5 +35,9 @@ export class ProductoService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  getIngredientes(): Observable<any[]> {
+    return this.http.get<any[]>('http://localhost:3000/bar_app/ingredientes');
+  }
+
 
 }
