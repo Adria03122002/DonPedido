@@ -1,159 +1,169 @@
-<div class="pos-layout animate-in">
-
-<!-- PANEL DE SELECCIÓN (IZQUIERDA) -->
-
-<div class="menu-panel">
-<div class="menu-header">
-<div class="header-info">
-<button (click)="cancelar()" class="btn-back">⬅️ Volver</button>
-<span class="location-badge">📍 {{ ubicacion() }}</span>
-</div>
-
-  <!-- SELECTOR DE CATEGORÍAS -->
-  <div class="tabs">
-    <button 
-      *ngFor="let cat of categorias" 
-      (click)="setCategoria(cat)" 
-      [class.active]="categoriaActiva() === cat">
-      {{ cat }}
-    </button>
-  </div>
-</div>
-
-<!-- GRID DE PRODUCTOS FILTRADOS -->
-<div class="products-grid">
-  <div *ngFor="let prod of productosFiltrados()" 
-       (click)="agregarProducto(prod)" 
-       class="prod-card animate-item">
-    
-    <!-- BOTÓN DE INFORMACIÓN (Ficha Técnica) -->
-    <button class="btn-info-circle" (click)="verInfo($event, prod)" title="Ver ingredientes">
-      i
-    </button>
-
-    <!-- LÓGICA DE IMAGEN DINÁMICA -->
-    <div class="prod-media">
-      <img *ngIf="prod.imagenUrl; else fallbackIcon" 
-           [src]="prod.imagenUrl" 
-           [alt]="prod.nombre" 
-           class="prod-img-render">
-      <ng-template #fallbackIcon>
-        <div class="prod-icon">🍽️</div>
-      </ng-template>
-    </div>
-
-    <div class="prod-info">
-        <p class="prod-name">{{ prod.nombre }}</p>
-        <span class="prod-price">{{ prod.precio | currency:'EUR' }}</span>
-    </div>
-    <div class="add-indicator">+</div>
-  </div>
-
-  <!-- Mensaje si no hay productos en la categoría -->
-  <div *ngIf="productosFiltrados().length === 0" class="empty-state">
-    <p>No hay productos disponibles en <strong>{{ categoriaActiva() }}</strong></p>
-  </div>
-</div>
-
-
-</div>
-
-<!-- PANEL DE TICKET (DERECHA) -->
-
-<aside class="ticket-panel">
-<div class="ticket-header">
-<h3>Comanda Actual</h3>
-<div class="customer-info" *ngIf="nombreCliente()">
-<small>Cliente:</small> <strong>{{ nombreCliente() }}</strong>
-</div>
-</div>
-
-<div class="ticket-body">
-  <!-- Estado vacío del ticket -->
-  <div *ngIf="lineasPedido().length === 0" class="ticket-empty-msg">
-      <p>Selecciona productos para comenzar el pedido</p>
-  </div>
-
-  <!-- Listado de líneas del ticket -->
-  <div *ngFor="let item of lineasPedido(); let i = index" class="ticket-line">
-    <div class="line-qty">{{ item.cantidad }}x</div>
-    <div class="line-details">
-      <span class="item-name">{{ item.nombre }}</span>
-      <span class="item-price-unit">{{ item.precio | currency:'EUR' }}</span>
-    </div>
-    <div class="line-total">
-      {{ (item.precio * item.cantidad) | currency:'EUR' }}
-    </div>
-    <button (click)="quitarProducto(i)" class="btn-remove-item">×</button>
-  </div>
-</div>
-
-<div class="ticket-footer">
-  <div class="total-summary">
-    <span class="label">TOTAL COMANDA</span>
-    <span class="amount">{{ totalComanda | currency:'EUR' }}</span>
-  </div>
+<div class="tpv-container animate-in">
   
-  <button 
-    [disabled]="lineasPedido().length === 0" 
-    (click)="enviarPedido()" 
-    class="btn-order">
-    ENVIAR A COCINA 🔥
-  </button>
-</div>
-
-
-</aside>
-
-<!-- MODAL DE FICHA TÉCNICA (INGREDIENTES) -->
-
-<div class="modal-overlay" *ngIf="productoSeleccionadoParaInfo()" (click)="cerrarInfo()">
-<div class="modal-card info-modal animate-in" (click)="$event.stopPropagation()">
-<header class="modal-header">
-<div class="header-main">
-<h3>Ficha Técnica</h3>
-<h2>{{ productoSeleccionadoParaInfo().nombre }}</h2>
-</div>
-<button class="btn-close-modal" (click)="cerrarInfo()">×</button>
-</header>
-
-  <div class="modal-content">
-    <!-- Imagen también en el modal si existe -->
-    <div class="modal-product-img" *ngIf="productoSeleccionadoParaInfo().imagenUrl">
-      <img [src]="productoSeleccionadoParaInfo().imagenUrl" [alt]="productoSeleccionadoParaInfo().nombre">
-    </div>
-
-    <div class="ingredientes-section">
-      <p class="section-title">Composición e Ingredientes:</p>
-      
-      <!-- Lista de ingredientes del producto -->
-      <div *ngIf="!productoSeleccionadoParaInfo().ingredientes || productoSeleccionadoParaInfo().ingredientes.length === 0" class="no-data">
-        No se han detallado ingredientes para este producto.
+  <!-- LADO IZQUIERDO: CATÁLOGO DE PRODUCTOS -->
+  <main class="menu-section">
+    <header class="menu-header">
+      <div class="header-top">
+        <button (click)="volver()" class="btn-back" title="Volver">⬅️</button>
+        <div>
+          <h1>{{ esNuevo ? 'Nueva' : 'Modificar' }} <span class="accent">Comanda</span></h1>
+          <p class="subtitle">Gestiona los productos de la cuenta</p>
+        </div>
       </div>
 
-      <ul class="ingredientes-list">
-        <li *ngFor="let rel of productoSeleccionadoParaInfo().ingredientes">
-          <span class="ing-name">{{ rel.ingrediente?.nombre }}</span>
-          <span class="ing-dot"></span>
-          <span class="ing-qty">{{ rel.cantidadNecesaria }} {{ rel.ingrediente?.unidad }}</span>
-        </li>
-      </ul>
+      <nav class="category-bar custom-scroll">
+        <button 
+          *ngFor="let cat of categorias" 
+          (click)="setCategoria(cat)" 
+          class="category-chip"
+          [class.active]="categoriaActiva === cat">
+          {{ cat }}
+        </button>
+      </nav>
+    </header>
+
+    <div class="products-grid custom-scroll">
+      <div *ngFor="let prod of productosFiltrados" 
+           (click)="agregarProducto(prod)"
+           class="product-card animate-slide-in">
+        
+        <!-- BOTÓN DE INFORMACIÓN (Ficha Técnica) -->
+        <button class="btn-info-circle" (click)="verInfo($event, prod)" title="Ver ingredientes">i</button>
+
+        <div class="icon-wrapper">
+          <img *ngIf="prod.imagenUrl" 
+               [src]="prod.imagenUrl" 
+               [alt]="prod.nombre" 
+               class="product-img"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          
+          <span class="fallback-emoji" style="display: none;">
+            {{ getEmoji(prod.tipo) }}
+          </span>
+
+          <span *ngIf="!prod.imagenUrl" class="fallback-emoji">
+            {{ getEmoji(prod.tipo) }}
+          </span>
+        </div>
+
+        <div class="product-info">
+          <h3 class="name">{{ prod.nombre }}</h3>
+          <span class="price">{{ prod.precio | currency:'EUR' }}</span>
+        </div>
+        
+        <div class="plus-indicator">+</div>
+      </div>
+
+      <div *ngIf="productosFiltrados.length === 0" class="empty-cat">
+        <p>No hay productos en {{ categoriaActiva }}</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- LADO DERECHO: TICKET -->
+  <aside class="ticket-section">
+    <header class="ticket-header">
+      <div class="customer-info">
+        <div class="avatar-mesa">📍</div>
+        <div class="details">
+          <span class="badge">Mesa / Ubicación</span>
+          <h2>{{ ubicacion }}</h2>
+          <p class="client-name">{{ nombreCliente || 'Cliente General' }}</p>
+        </div>
+      </div>
+      <div *ngIf="pedidoId" class="order-id">#{{ pedidoId }}</div>
+    </header>
+
+    <div class="ticket-items custom-scroll">
+      <div *ngIf="lineasPedido.length === 0" class="empty-state">
+        <span class="empty-icon">📝</span>
+        <p>El ticket está vacío</p>
+      </div>
+
+      <div *ngFor="let linea of lineasPedido; let i = index" class="linea-item animate-slide-in">
+        <div class="item-main">
+          <div class="item-thumb">
+            <img *ngIf="linea.producto.imagenUrl" [src]="linea.producto.imagenUrl" class="thumb-img">
+            <span *ngIf="!linea.producto.imagenUrl">{{ getEmoji(linea.producto.tipo) }}</span>
+          </div>
+
+          <div class="item-info">
+            <span class="title">{{ linea.producto.nombre }}</span>
+            <span class="subtotal">{{ (linea.cantidad * (linea.producto.precio || 0)) | currency:'EUR' }}</span>
+          </div>
+          
+          <div class="qty-controls">
+            <button (click)="cambiarCantidad(i, -1)" class="btn-qty minus">－</button>
+            <span class="qty-val">{{ linea.cantidad }}</span>
+            <button (click)="cambiarCantidad(i, 1)" class="btn-qty plus">＋</button>
+          </div>
+        </div>
+        
+        <div class="item-footer">
+          <div class="note-wrapper">
+            <span class="note-icon">📝</span>
+            <input [(ngModel)]="linea.modificacion" 
+                   placeholder="Notas (sin cebolla, muy hecho...)" 
+                   class="item-note">
+          </div>
+          <button (click)="eliminarLinea(i)" class="btn-remove" title="Eliminar plato">✖</button>
+        </div>
+      </div>
     </div>
 
-    <div class="price-info-box">
-      <span>Precio de venta al público:</span>
-      <strong>{{ productoSeleccionadoParaInfo().precio | currency:'EUR' }}</strong>
+    <footer class="ticket-footer">
+      <div class="total-row">
+        <span class="total-label">Importe Total</span>
+        <span class="total-amount">{{ calcularTotal() | currency:'EUR' }}</span>
+      </div>
+
+      <button (click)="guardar()" 
+              [disabled]="lineasPedido.length === 0"
+              class="btn-submit"
+              [class.btn-update]="!esNuevo">
+        {{ esNuevo ? '🚀 ENVIAR A COCINA' : '✅ GUARDAR CAMBIOS' }}
+      </button>
+    </footer>
+  </aside>
+
+  <!-- MODAL DE FICHA TÉCNICA (INGREDIENTES) -->
+  <div class="modal-overlay" *ngIf="productoSeleccionadoParaInfo" (click)="cerrarInfo()">
+    <div class="modal-card info-modal animate-in" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div class="header-main">
+          <h3>Ficha Técnica</h3>
+          <h2>{{ productoSeleccionadoParaInfo.nombre }}</h2>
+        </div>
+        <button class="btn-close-modal" (click)="cerrarInfo()">×</button>
+      </header>
+
+      <div class="modal-content">
+        <div class="modal-product-img" *ngIf="productoSeleccionadoParaInfo.imagenUrl">
+          <img [src]="productoSeleccionadoParaInfo.imagenUrl" [alt]="productoSeleccionadoParaInfo.nombre">
+        </div>
+
+        <div class="ingredientes-section">
+          <p class="section-title">Composición e Ingredientes:</p>
+          
+          <ul class="ingredientes-list" *ngIf="productoSeleccionadoParaInfo.ingredientes.length; else noIng">
+            <li *ngFor="let rel of productoSeleccionadoParaInfo.ingredientes">
+              <span class="ing-name">{{ rel.ingrediente?.nombre }}</span>
+              <span class="ing-dot"></span>
+              <span class="ing-qty">{{ rel.cantidadNecesaria }} {{ rel.ingrediente?.unidad }}</span>
+            </li>
+          </ul>
+          <ng-template #noIng>
+            <p class="no-data">No hay ingredientes detallados para este producto.</p>
+          </ng-template>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button class="btn-add-from-info" (click)="agregarProducto(productoSeleccionadoParaInfo); cerrarInfo()">
+          🛒 Añadir a Comanda
+        </button>
+      </footer>
     </div>
   </div>
-
-  <footer class="modal-footer">
-    <button class="btn-add-from-info" (click)="agregarProducto(productoSeleccionadoParaInfo()); cerrarInfo()">
-      🛒 Añadir a Comanda
-    </button>
-  </footer>
-</div>
-
-
-</div>
 
 </div>

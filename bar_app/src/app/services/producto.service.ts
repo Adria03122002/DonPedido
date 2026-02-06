@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Producto } from '../interfaces/producto';
@@ -7,9 +7,21 @@ import { Producto } from '../interfaces/producto';
   providedIn: 'root'
 })
 export class ProductoService {
-  private apiUrl = 'http://localhost:3000/bar_app/productos';
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private getApiBaseUrl(): string {
+    const port = window.location.port;
+    const hostname = window.location.hostname;
+
+    if (port === '4200') {
+      return `http://${hostname}:3000/bar_app`;
+    }
+    
+    return '/bar_app';
+  }
+
+  private readonly apiBaseUrl = this.getApiBaseUrl();
+  private readonly apiUrl = `${this.apiBaseUrl}/productos`;
 
   getAll(): Observable<Producto[]> {
     return this.http.get<Producto[]>(this.apiUrl);
@@ -24,8 +36,8 @@ export class ProductoService {
   }
 
   update(id: number, producto: Partial<Producto>): Observable<Producto> {
-  return this.http.put<Producto>(`${this.apiUrl}/${id}`, producto);
-}
+    return this.http.put<Producto>(`${this.apiUrl}/${id}`, producto);
+  }
 
   cambiarDisponibilidad(id: number): Observable<Producto> {
     return this.http.put<Producto>(`${this.apiUrl}/${id}/estado`, {});
@@ -36,8 +48,6 @@ export class ProductoService {
   }
 
   getIngredientes(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/bar_app/ingredientes');
+    return this.http.get<any[]>(`${this.apiBaseUrl}/ingredientes`);
   }
-
-
 }

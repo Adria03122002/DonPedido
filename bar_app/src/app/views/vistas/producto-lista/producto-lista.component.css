@@ -1,147 +1,238 @@
+:host {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --bg-app: #f1f5f9;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --border-color: #e2e8f0;
+  --radius-lg: 1.5rem;
+  --radius-md: 0.85rem;
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  display: block;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  padding: 2rem;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
 .producto-lista-container {
-  padding: 2.5rem;
-  background-color: #f8fafc;
-  min-height: calc(100vh - 150px);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.producto-lista-container h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 2rem;
-  letter-spacing: -0.025em;
-}
-
-/* Contenedor del botón superior */
-.btn-contenedor-derecha {
+.lista-header {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 2rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
 }
 
-/* Botón Crear Producto (Estilo similar al de Mapa de Mesas) */
+.lista-header h2 {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.05em;
+}
+
+.accent { color: var(--primary); }
+
 .btn-crear {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: var(--primary);
   color: white;
   border: none;
-  padding: 0.8rem 1.8rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  border-radius: 0.75rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
 }
 
 .btn-crear:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px rgba(16, 185, 129, 0.3);
-  filter: brightness(1.05);
+  background: var(--primary-dark);
+  box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
 }
 
-/* Estilo de la Tabla Moderna */
-.tabla-wrapper {
-  background: white;
-  border-radius: 1.25rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-  overflow: hidden; /* Para que las esquinas de la tabla sigan el radio */
-  border: 1px solid #e2e8f0;
+.tabla-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
-.producto-lista-container table {
+.tabla-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-}
-
-.producto-lista-container th {
-  background-color: #f8fafc;
-  color: #64748b;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  padding: 1.25rem 1.5rem;
   text-align: left;
-  border-bottom: 2px solid #f1f5f9;
 }
 
-.producto-lista-container td {
+thead th {
+  background-color: #f8fafc;
   padding: 1.25rem 1.5rem;
-  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border-color);
+}
+
+tbody td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
   font-size: 0.95rem;
-  border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
 
-/* Efecto hover en las filas */
-.producto-lista-container tr:last-child td {
-  border-bottom: none;
+tbody tr:hover { background-color: #fcfdfe; }
+
+.font-bold { font-weight: 700; }
+.price-cell { font-weight: 800; color: var(--primary); }
+
+.tipo-tag {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: capitalize;
 }
 
-.producto-lista-container tr:hover td {
-  background-color: #fcfdfe;
+.badge-disponible {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-/* Estilo para las listas de ingredientes dentro de la tabla */
-.producto-lista-container ul {
-  padding-left: 0;
-  margin: 0;
-  list-style: none;
+.badge-disponible.si { background: #dcfce7; color: #166534; }
+.badge-disponible.no { background: #fee2e2; color: #991b1b; }
+
+.ingredientes-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 6px;
+  max-width: 300px;
 }
 
-.producto-lista-container li {
-  font-size: 0.8rem;
-  background: #f1f5f9;
-  color: #475569;
-  padding: 0.2rem 0.6rem;
-  border-radius: 0.4rem;
+.ing-tag {
+  font-size: 0.75rem;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-weight: 600;
+  border: 1px solid #dbeafe;
 }
 
-/* Botones de Acción (Editar/Eliminar) */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
 .btn-accion {
-  padding: 0.5rem 1rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   border: none;
-  border-radius: 0.5rem;
-  font-weight: 700;
-  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.btn-accion.editar {
-  background-color: #eff6ff;
-  color: #2563eb;
-  margin-right: 0.5rem;
+.btn-accion.editar { background: #e0f2fe; color: #0369a1; }
+.btn-accion.eliminar { background: #fee2e2; color: #b91c1c; }
+
+.btn-accion:hover { transform: scale(1.1); filter: brightness(0.95); }
+.btn-accion.eliminar:hover { background: var(--danger); color: white; }
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
 }
 
-.btn-accion.editar:hover {
-  background-color: #2563eb;
-  color: white;
+.modal-card {
+  background: white;
+  padding: 3rem;
+  border-radius: 2.5rem;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
 }
 
-.btn-accion.eliminar {
-  background-color: #fef2f2;
-  color: #ef4444;
+.modal-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
 }
 
-.btn-accion.eliminar:hover {
-  background-color: #ef4444;
-  color: white;
-}
-
-/* Badge de precio */
-.precio-texto {
+.modal-card h3 {
+  font-size: 1.75rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-main);
+  margin-bottom: 1rem;
 }
+
+.modal-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.modal-footer-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-modal {
+  width: 100%;
+  padding: 1.15rem;
+  border-radius: 1.25rem;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-modal.confirmar {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
+.btn-modal.cancelar {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-modal:hover { transform: translateY(-2px); }
+
+.animate-in { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.modal-card.animate-in { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
