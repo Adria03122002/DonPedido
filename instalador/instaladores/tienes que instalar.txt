@@ -1,0 +1,8 @@
+https://nodejs.org/es/download/archive/v22.10.0#:~:text=node%2Dv22.10.0%2Dx64.msi
+
+
+https://downloads.mysql.com/archives/get/p/23/file/mysql-8.0.44-winx64.zip
+
+
+todo lo que descarges lo arrastras a esta ventana, no instales nada
+
