@@ -1,13 +1,12 @@
-// Usamos require para evitar errores de compatibilidad en el dist de Windows
 const express = require('express');
+const cors = require('cors');
 import * as bodyParser from "body-parser";
 import { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
 import { Routes } from "./routes";
 import path from "path";
 import { inicializarSistema } from "./controller/Admin_bootstrap";
-
-const cors = require('cors');
+import { iniciarAnuncioMDNS } from "./mdns-advertiser";
 
 AppDataSource.initialize().then(async () => {
 
@@ -42,7 +41,7 @@ AppDataSource.initialize().then(async () => {
                     }
                 }
             } catch (error: any) {
-                console.error(`❌ Error en ${apiPath}:`, error);
+                console.error(`❌ Error en ruta ${apiPath}:`, error);
                 if (!res.headersSent) {
                     res.status(500).json({ error: "Error interno del servidor" });
                 }
@@ -53,9 +52,8 @@ AppDataSource.initialize().then(async () => {
 
     app.get('*', (req: Request, res: Response) => {
         if (req.path.startsWith('/bar_app')) {
-             return res.status(404).json({ message: "API: Ruta no encontrada o método inválido" });
+             return res.status(404).json({ message: "API: Ruta no encontrada" });
         }
-        
         res.sendFile(path.join(publicPath, 'index.html'));
     });
 
@@ -63,8 +61,11 @@ AppDataSource.initialize().then(async () => {
     app.listen(PORT, () => {
         console.log("--------------------------------------------------");
         console.log(`🚀 SERVIDOR UNIFICADO ACTIVO EN PUERTO ${PORT}`);
-        console.log(`🔗 WEB (Acceso Usuario): http://localhost:${PORT}`);
-        console.log(`📂 CARPETA PUBLIC: ${publicPath}`);
+        console.log(`🔗 Acceso Local: http://localhost:${PORT}`);
+        console.log(`📂 Sirviendo desde: ${publicPath}`);
+        
+        iniciarAnuncioMDNS();
+        
         console.log("--------------------------------------------------");
     });
 
