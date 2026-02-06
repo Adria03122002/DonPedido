@@ -42,7 +42,7 @@ export class LoginComponent {
     this.authService.login(this.loginData).subscribe({
       next: (res) => {
         console.log('✅ Login exitoso:', res.user.nombre);
-        this.redirigirSegunRol(res.user.rol);
+        this.redirigirSegunRol(res.user.rol as string);
       },
       error: (err) => {
         this.cargando = false;

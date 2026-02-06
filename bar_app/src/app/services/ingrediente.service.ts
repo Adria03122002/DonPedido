@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Ingrediente } from '../interfaces/ingrediente';
@@ -7,7 +7,20 @@ import { Ingrediente } from '../interfaces/ingrediente';
   providedIn: 'root'
 })
 export class IngredienteService {
-  private apiUrl = 'http://localhost:3000/bar_app/ingredientes';
+  private http = inject(HttpClient);
+
+  private getApiUrl(): string {
+    const port = window.location.port;
+    const hostname = window.location.hostname;
+
+    if (port === '4200') {
+      return `http://${hostname}:3000/bar_app/ingredientes`;
+    }
+    
+    return '/bar_app/ingredientes';
+  }
+
+  private readonly apiUrl = this.getApiUrl();
 
   private readonly tiposIngrediente: string[] = [
     'refresco',
@@ -32,8 +45,6 @@ export class IngredienteService {
     'otro'
   ];
 
-  constructor(private http: HttpClient) {}
-
   getAll(): Observable<Ingrediente[]> {
     return this.http.get<Ingrediente[]>(this.apiUrl);
   }
@@ -50,9 +61,7 @@ export class IngredienteService {
     return this.http.put<Ingrediente>(`${this.apiUrl}/${id}`, ingrediente);
   }
 
-
   getTiposIngrediente(): string[] {
-      return [...this.tiposIngrediente]; 
-    }
-
+    return [...this.tiposIngrediente]; 
+  }
 }

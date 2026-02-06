@@ -1,43 +1,72 @@
 <div class="producto-lista-container">
-  <h2>
-    Lista de Productos
+  <header class="lista-header">
+    <h2>
+      Lista de <span class="accent">Productos</span>
+    </h2>
     <div class="btn-contenedor-derecha">
-      <button class="btn-crear" [routerLink]="['/barra/productos/crear']">+ Añadir producto</button>
+      <button class="btn-crear" [routerLink]="['/barra/productos/crear']">
+        <span>+</span> Añadir producto
+      </button>
     </div>
-  </h2>
+  </header>
 
+  <div class="tabla-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Tipo</th>
+          <th>Estado</th>
+          <th>Ingredientes</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let producto of productos">
+          <td class="font-bold">{{ producto.nombre }}</td>
+          <td class="price-cell">{{ producto.precio | currency:'EUR' }}</td>
+          <td>
+            <span class="tipo-tag">{{ getEmoji(producto.tipo) }} {{ producto.tipo }}</span>
+          </td>
+          <td>
+            <span class="badge-disponible" [ngClass]="producto.disponible ? 'si' : 'no'">
+              {{ producto.disponible ? 'Disponible' : 'Agotado' }}
+            </span>
+          </td>
+          <td>
+            <div class="ingredientes-tags">
+              <span *ngFor="let pi of producto.ingredientes" class="ing-tag">
+                {{ pi.ingrediente.nombre }} {{ pi.cantidadNecesaria }} {{ pi.ingrediente.unidad }}
+              </span>
+              <em *ngIf="!producto.ingredientes.length" class="text-muted">Sin receta</em>
+            </div>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn-accion editar" (click)="editarProducto(producto)" title="Editar">
+                ✏️
+              </button>
+              <button class="btn-accion eliminar" (click)="eliminarProducto(producto.id)" title="Eliminar">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-
-  <table>
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Precio</th>
-        <th>Tipo</th>
-        <th>Disponible</th>
-        <th>Ingredientes</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let producto of productos">
-        <td>{{ producto.nombre }}</td>
-        <td>{{ producto.precio | currency:'EUR' }}</td>
-        <td>{{ producto.tipo }}</td>
-        <td>{{ producto.disponible ? 'Sí' : 'No' }}</td>
-        <td>
-          <ul>
-            <li *ngFor="let pi of producto.ingredientes">
-              {{ pi.ingrediente.nombre }} ({{ pi.cantidadNecesaria }})
-            </li>
-          </ul>
-        </td>
-        <td>
-          <button class="btn-accion editar" (click)="editarProducto(producto)">Editar</button>
-          <button class="btn-accion eliminar" (click)="eliminarProducto(producto.id)">Eliminar</button>
-        </td>
-
-      </tr>
-    </tbody>
-  </table>
+  <div class="modal-overlay" *ngIf="productoAEliminarId !== null">
+    <div class="modal-card animate-in">
+      <div class="modal-icon">⚠️</div>
+      <h3>¿Eliminar producto?</h3>
+      <p>Esta acción borrará <strong>definitivamente</strong> el producto de la carta. Esta operación no se puede deshacer.</p>
+      
+      <div class="modal-footer-btns">
+        <button class="btn-modal confirmar" (click)="confirmarEliminacion()">Eliminar ahora</button>
+        <button class="btn-modal cancelar" (click)="cerrarModal()">Mejor no, volver</button>
+      </div>
+    </div>
+  </div>
 </div>

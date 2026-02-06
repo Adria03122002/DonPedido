@@ -9,21 +9,25 @@ import { CrearPedidoPayload, Pedido } from '../interfaces/pedido';
 })
 export class PedidoService {
   private http = inject(HttpClient);
-  
-  // Tu URL base corregida
-  private readonly API_URL = 'http://localhost:3000/bar_app/pedidos';
 
-  /**
-   * CONFIGURACIÓN DE REINTENTOS
-   * Si el servidor da un error 500, Angular reintentará la petición 
-   * automáticamente 3 veces antes de mostrar el error final.
-   */
+  private getApiUrl(): string {
+    const port = window.location.port;
+    const hostname = window.location.hostname;
+
+    if (port === '4200') {
+      return `http://${hostname}:3000/bar_app/pedidos`;
+    }
+    
+    return '/bar_app/pedidos';
+  }
+
+  private readonly API_URL = this.getApiUrl();
+
   private readonly retryConfig = {
     count: 3,
     delay: (error: HttpErrorResponse, retryCount: number) => {
-      // Solo reintenta si es un error de servidor (500) o de red (0)
       if (error.status >= 500 || error.status === 0) {
-        return timer(retryCount * 1000); // Espera 1s, luego 2s, luego 3s...
+        return timer(retryCount * 1000);
       }
       return throwError(() => error);
     }
@@ -50,7 +54,6 @@ export class PedidoService {
     );
   }
 
-  // Este es el método que suele usar la vista de cocina
   getPedidosActivos(): Observable<Pedido[]> {
     return this.http.get<Pedido[]>(`${this.API_URL}/activos`).pipe(
       retry(this.retryConfig),
@@ -94,16 +97,11 @@ export class PedidoService {
     );
   }
 
-  /**
-   * MANEJO DE ERRORES MEJORADO
-   */
   private handleError(error: HttpErrorResponse) {
-    // Si el backend no encuentra el recurso (404), lanzamos el error original
     if (error.status === 404) {
       return throwError(() => error);
     }
 
-    // Si es un error 500, intentamos dar un mensaje más descriptivo
     const mensaje = error.error?.message || 'Error crítico en el servidor (500)';
     console.error(`Error Detectado [Status ${error.status}]:`, error.error);
     

@@ -8,21 +8,34 @@ import { Usuario } from '../interfaces/usuario';
 })
 export class UsuarioService {
   private http = inject(HttpClient);
-  private url = 'http://localhost:3000/bar_app/usuarios'; // Cambia esto por tu URL real
+
+  private getApiBaseUrl(): string {
+    const port = window.location.port;
+    const hostname = window.location.hostname;
+
+    if (port === '4200') {
+      return `http://${hostname}:3000/bar_app`;
+    }
+    
+    return '/bar_app';
+  }
+
+  private readonly apiBaseUrl = this.getApiBaseUrl();
+  private readonly apiUrl = `${this.apiBaseUrl}/usuarios`;
 
   getAll(): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(this.url);
+    return this.http.get<Usuario[]>(this.apiUrl);
   }
 
   create(usuario: any): Observable<Usuario> {
-    return this.http.post<Usuario>(this.url, usuario);
+    return this.http.post<Usuario>(this.apiUrl, usuario);
   }
 
   update(id: number, usuario: any): Observable<Usuario> {
-    return this.http.put<Usuario>(`${this.url}/${id}`, usuario);
+    return this.http.put<Usuario>(`${this.apiUrl}/${id}`, usuario);
   }
 
   delete(id: number): Observable<any> {
-    return this.http.delete(`${this.url}/${id}`);
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }

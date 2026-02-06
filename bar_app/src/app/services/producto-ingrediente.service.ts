@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ProductoIngrediente } from '../interfaces/producto-ingrediente';
 import { Observable } from 'rxjs';
@@ -7,9 +7,20 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ProductoIngredienteService {
-  private apiUrl = 'http://localhost:3000/bar_app/producto-ingredientes';
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private getApiUrl(): string {
+    const port = window.location.port;
+    const hostname = window.location.hostname;
+
+    if (port === '4200') {
+      return `http://${hostname}:3000/bar_app/producto-ingredientes`;
+    }
+    
+    return '/bar_app/producto-ingredientes';
+  }
+
+  private readonly apiUrl = this.getApiUrl();
 
   getAll(): Observable<ProductoIngrediente[]> {
     return this.http.get<ProductoIngrediente[]>(this.apiUrl);

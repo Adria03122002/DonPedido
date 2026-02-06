@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LineaPedido } from '../interfaces/linea-pedido';
 import { Observable } from 'rxjs';
@@ -7,9 +7,20 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class LineaPedidoService {
-  private apiUrl = 'http://localhost:3000/bar_app/lineas-pedido';
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private getApiUrl(): string {
+    const port = window.location.port;
+    const hostname = window.location.hostname;
+
+    if (port === '4200') {
+      return `http://${hostname}:3000/bar_app/lineas-pedido`;
+    }
+    
+    return '/bar_app/lineas-pedido';
+  }
+
+  private readonly apiUrl = this.getApiUrl();
 
   getLineasPedido(): Observable<LineaPedido[]> {
     return this.http.get<LineaPedido[]>(this.apiUrl);
