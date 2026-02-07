@@ -145,7 +145,7 @@
         <div class="ingredientes-section">
           <p class="section-title">Composición e Ingredientes:</p>
           
-          <ul class="ingredientes-list" *ngIf="productoSeleccionadoParaInfo.ingredientes.length; else noIng">
+          <ul class="ingredientes-list" *ngIf="productoSeleccionadoParaInfo.ingredientes?.length; else noIng">
             <li *ngFor="let rel of productoSeleccionadoParaInfo.ingredientes">
               <span class="ing-name">{{ rel.ingrediente?.nombre }}</span>
               <span class="ing-dot"></span>

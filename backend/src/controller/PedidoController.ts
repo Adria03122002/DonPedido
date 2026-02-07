@@ -37,11 +37,10 @@ export class PedidoController {
             const pedidos = await this.pedidoRepo.find({
                 where: { 
                     pagado: false,
-                    // Solo traemos pedidos que NO estén servidos ni finalizados
                     estado: Not(In(["servido", "finalizado"]))
                 },
                 relations: ["lineas", "lineas.producto"],
-                order: { fecha: "ASC" } // Los más antiguos primero (prioridad)
+                order: { fecha: "ASC" } 
             });
             return pedidos.map(p => this.serializar(p));
         } catch (error) {
@@ -74,91 +73,101 @@ export class PedidoController {
      * action: "updatePedido"
      * ESTA ES LA FUNCIÓN QUE ARREGLA EL TICKET
      */
-        async updatePedido(req: Request, res: Response) {
+    async updatePedido(req: Request, res: Response) {
         const id = Number(req.params.id);
-        const { ubicacion, lineas, estado } = req.body;
+        const { ubicacion, lineas } = req.body;
 
-        console.log(`\n--- [DEBUG] 1: INICIO UPDATE PEDIDO ${id} ---`);
-
-        if (isNaN(id)) {
-            console.error("❌ [DEBUG] ERROR: ID es NaN");
-            res.status(400);
-            return { error: "ID no válido" };
-        }
+        if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
 
         try {
-            // 1. Cargar el pedido con sus líneas para tenerlo en memoria
             const pedido = await this.pedidoRepo.findOne({
                 where: { id },
-                relations: ["lineas"]
+                relations: ["lineas", "lineas.producto"]
             });
 
-            if (!pedido) {
-                console.error("❌ [DEBUG] Pedido no encontrado");
-                res.status(404);
-                return { error: "No existe" };
-            }
+            if (!pedido) return res.status(404).json({ error: "No existe el pedido" });
 
-            // 2. BORRADO "FUERZA BRUTA" (Query Builder)
-            // Esto envía un "DELETE FROM lineapedido WHERE pedidoId = X" directo a MySQL
-            console.log(`🧹 [DEBUG] 2: Ejecutando borrado SQL de líneas antiguas...`);
-            await AppDataSource
-                .createQueryBuilder()
+            const estabaServido = pedido.estado === "servido";
+            
+            const datosViejos: { [id: number]: { cant: number, nota: string } } = {};
+            pedido.lineas.forEach(l => {
+                datosViejos[l.producto.id] = { 
+                    cant: l.cantidad, 
+                    nota: l.modificacion || "" 
+                };
+            });
+
+            // 1. Limpieza de líneas para reconstrucción
+            await AppDataSource.createQueryBuilder()
                 .delete()
                 .from(LineaPedido)
                 .where("pedidoId = :id", { id: pedido.id })
                 .execute();
 
-            // Vaciamos la relación en el objeto de memoria para que el save posterior no haga cosas raras
             pedido.lineas = [];
-            console.log("✅ [DEBUG] 3: Memoria del objeto limpiada.");
 
-            // 3. INSERTAR NUEVAS LÍNEAS
-            let nuevoTotal = 0;
+            // 2. Procesamiento de nuevas líneas y cálculo de total
+            let totalReal = 0;
             if (lineas && Array.isArray(lineas)) {
-                console.log(`🏗️ [DEBUG] 4: Procesando ${lineas.length} líneas nuevas...`);
                 for (const item of lineas) {
-                    const idProd = Number(item.productoId || item.producto?.id);
-                    const producto = await this.productoRepo.findOneBy({ id: idProd });
+                    const prodId = Number(item.productoId || item.producto?.id);
+                    const producto = await this.productoRepo.findOneBy({ id: prodId });
 
                     if (producto) {
-                        const cant = Number(item.cantidad) || 1;
-                        nuevoTotal += Number(producto.precio) * cant;
+                        const cantNueva = Number(item.cantidad) || 1;
+                        const viejo = datosViejos[prodId] || { cant: 0, nota: "" };
+                        
+                        totalReal += Number(producto.precio) * cantNueva;
 
-                        // Creamos la línea pero NO la guardamos aún individualmente
-                        const nuevaLinea = this.lineaRepo.create({
-                            cantidad: cant,
-                            modificacion: item.modificacion || "",
+                        // Recuperamos la nota (prioridad a la que viene del TPV, si no la vieja)
+                        let notaFinal = item.modificacion || viejo.nota;
+
+                        if (estabaServido && viejo.cant > 0) {
+                            const marcadorOk = `[OK: ${viejo.cant} SERVIDAS]`;
+                            
+                            if (cantNueva > viejo.cant) {
+                                // LÓGICA DE LIMPIEZA: Quitamos [ENTREGADO] si vamos a poner [OK: X SERVIDAS]
+                                // Usamos una RegExp para quitar el tag y los espacios sobrantes
+                                notaFinal = notaFinal.replace(/\[ENTREGADO\]\s*/gi, "");
+                                
+                                if (!notaFinal.includes(marcadorOk)) {
+                                    notaFinal = `${marcadorOk} ${notaFinal}`.trim();
+                                }
+                            } else {
+                                // Si no hay incremento, mantenemos el tag de entregado
+                                if (!notaFinal.includes("[ENTREGADO]")) {
+                                    notaFinal = `[ENTREGADO] ${notaFinal}`.trim();
+                                }
+                            }
+                        }
+
+                        pedido.lineas.push(this.lineaRepo.create({
+                            cantidad: cantNueva,
+                            modificacion: notaFinal,
                             pedido: pedido,
                             producto: producto
-                        });
-                        // La añadimos al array del pedido
-                        pedido.lineas.push(nuevaLinea);
+                        }));
                     }
                 }
             }
 
-            // 4. ACTUALIZAR CABECERA Y GUARDAR TODO EN CASCADA
-            pedido.total = nuevoTotal;
+            pedido.total = totalReal;
             pedido.ubicacion = ubicacion || pedido.ubicacion;
-            if (estado) pedido.estado = estado;
+            pedido.estado = "pendiente"; 
 
-            console.log("💾 [DEBUG] 5: Guardando pedido y nuevas líneas en una sola operación...");
             await this.pedidoRepo.save(pedido);
 
-            // 5. RECARGA FINAL (Garantiza que 'producto' no sea null)
-            const pedidoFinal = await this.pedidoRepo.findOne({
+            // 3. Respuesta con el objeto refrescado para la tablet
+            const pedidoActualizado = await this.pedidoRepo.findOne({
                 where: { id: pedido.id },
                 relations: ["lineas", "lineas.producto"]
             });
 
-            console.log("🚀 [DEBUG] 6: Sincronización terminada.");
-            return this.serializar(pedidoFinal!);
+            return res.json(pedidoActualizado);
 
         } catch (error: any) {
-            console.error("🔥 [DEBUG] FALLO CRÍTICO:", error.message);
-            res.status(500);
-            return { error: "Error en el servidor", detalle: error.message };
+            console.error("Error en update:", error.message);
+            return res.status(500).json({ error: "Error interno" });
         }
     }
 
@@ -266,17 +275,41 @@ export class PedidoController {
         const { estado } = req.body;
 
         try {
-            const pedido = await this.pedidoRepo.findOneBy({ id });
-            if (!pedido) {
-                return res.status(404).json({ message: "Pedido no encontrado" });
-            }
+            const pedido = await this.pedidoRepo.findOne({
+                where: { id },
+                relations: ["lineas", "lineas.producto"]
+            });
+
+            if (!pedido) return res.status(404).json({ message: "Pedido no encontrado" });
 
             pedido.estado = estado;
+
+            if (estado.toLowerCase() === "servido" && pedido.lineas) {
+                pedido.lineas.forEach(linea => {
+                    let notaActual = linea.modificacion || "";
+                    
+                    // Al completar el pedido, limpiamos cualquier marcador parcial previo [OK: ...]
+                    // para poner el tag definitivo de [ENTREGADO]
+                    notaActual = notaActual.replace(/\[OK:.*SERVIDAS\]\s*/gi, "");
+
+                    if (!notaActual.includes("[ENTREGADO]")) {
+                        linea.modificacion = `[ENTREGADO] ${notaActual}`.trim();
+                    }
+                });
+                await this.lineaRepo.save(pedido.lineas);
+            }
+
             await this.pedidoRepo.save(pedido);
             
-            return res.json({ success: true, estado: pedido.estado });
+            const final = await this.pedidoRepo.findOne({
+                where: { id },
+                relations: ["lineas", "lineas.producto"]
+            });
+
+            return res.json(final);
         } catch (error: any) {
-            return res.status(500).json({ error: "Error al actualizar estado", detalle: error.message });
+            console.error("Error al actualizar estado:", error.message);
+            return res.status(500).json({ error: "Error al actualizar estado" });
         }
     }
 
