@@ -1,5 +1,3 @@
-
-
 export interface Producto {
   id: number;
   nombre: string;
@@ -8,4 +6,5 @@ export interface Producto {
   imagenUrl: string;
   disponible: boolean;
   stock?: number | null;
+  ingredientes?: any[];
 }

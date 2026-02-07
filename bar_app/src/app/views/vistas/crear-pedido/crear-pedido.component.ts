@@ -7,8 +7,6 @@ import { ProductoService } from 'src/app/services/producto.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { Producto } from 'src/app/interfaces/producto';
 import { LineaPedido } from 'src/app/interfaces/linea-pedido';
-import { ProductoIngrediente } from 'src/app/interfaces/producto-ingrediente';
-
 
 @Component({
   selector: 'app-crear-pedido',
@@ -25,17 +23,17 @@ export class CrearPedidoComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  // --- ESTADOS PRIVADOS (Signals) ---
   private _pedidoId = signal<number | null>(null);
   private _esNuevo = signal<boolean>(true);
   private _ubicacion = signal<string>('Cargando...');
   private _nombreCliente = signal<string>('');
-  private _lineasPedido = signal<LineaPedido[]>([]);
+  private _lineasPedido = signal<any[]>([]); 
   private _productosMenu = signal<Producto[]>([]);
   private _categoriaActiva = signal<string>('Todos');
+  private _productoSeleccionadoParaInfo = signal<Producto | null>(null);
 
-  private _productoSeleccionadoParaInfo = signal<any | null>(null);
-
-  // --- GETTERS PARA EL HTML ---
+  // --- GETTERS PARA EL HTML (Permiten usar las variables sin paréntesis) ---
   get pedidoId() { return this._pedidoId(); }
   get esNuevo() { return this._esNuevo(); }
   get ubicacion() { return this._ubicacion(); }
@@ -43,6 +41,7 @@ export class CrearPedidoComponent implements OnInit {
   get lineasPedido() { return this._lineasPedido(); }
   get categoriaActiva() { return this._categoriaActiva(); }
   get productoSeleccionadoParaInfo() { return this._productoSeleccionadoParaInfo(); }
+  get productosFiltrados() { return this._productosFiltrados(); }
 
   categorias: string[] = ['Todos', 'Hamburguesas', 'Bebidas', 'Entrantes', 'Postres', 'Café'];
 
@@ -62,8 +61,6 @@ export class CrearPedidoComponent implements OnInit {
       return tipo === activa;
     });
   });
-
-  get productosFiltrados() { return this._productosFiltrados(); }
 
   ngOnInit(): void {
     this.cargarCatalogo();
@@ -100,7 +97,8 @@ export class CrearPedidoComponent implements OnInit {
         if (pedido) {
           this._ubicacion.set(pedido.ubicacion);
           this._nombreCliente.set(pedido.nombreCliente || 'Cliente');
-          this._lineasPedido.set((pedido.lineas || []).map((l: any) => ({
+          const lineasBase = pedido.lineas || [];
+          this._lineasPedido.set(lineasBase.map((l: any) => ({
             ...l,
             producto: { ...l.producto }
           })));
@@ -113,34 +111,42 @@ export class CrearPedidoComponent implements OnInit {
     this._categoriaActiva.set(cat);
   }
 
+  // --- LÓGICA DE FICHA TÉCNICA (LA "VISA") ---
+  verInfo(event: MouseEvent, prod: Producto) {
+    event.stopPropagation(); // Evita que se añada el producto al hacer clic en el botón 'i'
+    this._productoSeleccionadoParaInfo.set(prod);
+  }
 
+  cerrarInfo() {
+    this._productoSeleccionadoParaInfo.set(null);
+  }
+
+  // --- ACCIONES DEL TPV (Inmutabilidad para corregir contadores) ---
   agregarProducto(producto: Producto) {
     this._lineasPedido.update(actuales => {
-      const existe = actuales.find(l => l.producto.id === producto.id);
-      if (existe) {
-        existe.cantidad++;
-        return [...actuales];
+      const indice = actuales.findIndex(l => l.producto.id === producto.id);
+      
+      if (indice > -1) {
+        const nuevas = [...actuales];
+        nuevas[indice] = { ...nuevas[indice], cantidad: nuevas[indice].cantidad + 1 };
+        return nuevas;
       }
       
-      const nuevaLinea = { 
-        producto: { ...producto }, 
-        cantidad: 1, 
-        modificacion: '' 
-      } as LineaPedido;
-
-      return [...actuales, nuevaLinea];
+      return [...actuales, { producto: { ...producto }, cantidad: 1, modificacion: '' }];
     });
   }
 
   cambiarCantidad(index: number, delta: number) {
     this._lineasPedido.update(actuales => {
-      const nuevaCant = actuales[index].cantidad + delta;
+      const nuevas = [...actuales];
+      const nuevaCant = nuevas[index].cantidad + delta;
+
       if (nuevaCant <= 0) {
-        actuales.splice(index, 1);
-      } else {
-        actuales[index].cantidad = nuevaCant;
+        return nuevas.filter((_, i) => i !== index);
       }
-      return [...actuales];
+      
+      nuevas[index] = { ...nuevas[index], cantidad: nuevaCant };
+      return nuevas;
     });
   }
 
@@ -154,19 +160,6 @@ export class CrearPedidoComponent implements OnInit {
         return acc + (l.cantidad * precio);
     }, 0);
   }
-
-
-  
-  verInfo(event: MouseEvent, prod: Producto) {
-    event.stopPropagation(); 
-    this._productoSeleccionadoParaInfo.set(prod);
-  }
-
-  cerrarInfo() {
-    this._productoSeleccionadoParaInfo.set(null);
-  }
-
-  
 
   guardar() {
     if (this._lineasPedido().length === 0) return;
@@ -187,21 +180,19 @@ export class CrearPedidoComponent implements OnInit {
     request.subscribe({ next: () => this.volver() });
   }
 
-  private redirigirSegunRol() {
+  volver() {
     const rol = this.authService.getUserRole()?.toLowerCase();
     const path = rol === 'camarero' ? '/barra/mapa-mesas' : '/barra/pedidos';
     this.router.navigate([path]);
   }
 
-  volver() { this.redirigirSegunRol(); }
-
-  getEmoji(tipo: string): string {
-    const t = tipo?.toLowerCase() || '';
-    if (t.includes('bebida')) return '🍺';
-    if (t.includes('hamburguesa')) return '🍔';
-    if (t.includes('entrante')) return '🍟';
-    if (t.includes('postre')) return '🍰';
-    if (t.includes('cafe')) return '☕';
+  getEmoji(t: string): string {
+    const tipo = t?.toLowerCase() || '';
+    if (tipo.includes('bebida')) return '🍺';
+    if (tipo.includes('hamburguesa')) return '🍔';
+    if (tipo.includes('entrante')) return '🍟';
+    if (tipo.includes('postre')) return '🍰';
+    if (tipo.includes('cafe')) return '☕';
     return '🍽️';
   }
 }
